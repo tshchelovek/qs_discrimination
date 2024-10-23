@@ -18,7 +18,7 @@ function random_state(d)
 end
 
 # ρ = [random_state(d) for i in 1:N]
- ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]]
+ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]]
 # ρ = [[1 0 ; 0 0], [0 0 ; 0 1]]
 #  ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5], [0 0 ; 0 1]]
 # ρ = [[1 0 ; 0 0], [0 0 ; 0 1], [0.5 0.5 ; 0.5 0.5], [0.5 -0.5 ; -0.5 0.5]]
@@ -46,3 +46,4 @@ objective_value(model)
 0.5 + 0.25 * sum(LinearAlgebra.svdvals(ρ[1] - ρ[2]))
 
 solution = [value.(e) for e in E]
+print(solution)
