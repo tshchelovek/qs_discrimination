@@ -1,3 +1,10 @@
+#=
+greedy_three_qubits:
+- Julia version: 1.10.5
+- Author: ChernyshovaP
+- Date: 2024-10-07
+=#
+
 using JuMP
 import LinearAlgebra
 import SCS
