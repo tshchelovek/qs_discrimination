@@ -91,5 +91,3 @@ function sdp_solver()
     # println(isapprox(sol_primal[1], sol_dual[1]))
     println("prob_primal = ", sol_primal[1], "\n  prob_dual = ", sol_dual[1])
 end
-
-sdp_solver()
