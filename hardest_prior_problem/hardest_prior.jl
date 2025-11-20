@@ -5,7 +5,7 @@ hardest_prior:
 - Date: 2025-11-18
 =#
 
-using JuMP, MosekTools, IsApprox
+using JuMP, MosekTools, IsApprox, Random
 import LinearAlgebra
 import Dualization
 import SCS
@@ -21,31 +21,19 @@ function random_state(d)
     return LinearAlgebra.Hermitian(y / LinearAlgebra.tr(y))
 end
 
-# function dual_model(N, d, ρ, p)
+# function probs_recursion(N, sum, step = 0.1)
+#     # mock version
+#     if N == 1
+#         return Matrix{Any}([[sum]], 1, 1)
+#     end
 
-#     model_dual = Model(SCS.Optimizer)
-#     set_silent(model_dual)
+#     prev = probs_recursion(N - 1, sum - step, step)
 
-#     y = @variable(model_dual, [1:d, 1:d] in HermitianPSDCone())
+#     return 
+# end
 
-#     cs = [@constraint(model_dual, LinearAlgebra.Hermitian(p[i] * ρ[i]) <= y, HermitianPSDCone()) for i in 1:N]
-
-#     @objective(
-#         model_dual, 
-#         Min, 
-#         LinearAlgebra.tr(y))
-
-#     # print(model_dual)
-
-#     optimize!(model_dual)
-#     @assert is_solved_and_feasible(model_dual; dual = true)
-#     solution_summary(model_dual)
-
-#     objective_value(model_dual)
-
-#     # print("Minimal probability p = ", objective_value(model_dual), " is achieved for\n y = ", value.(y))
-#     solution = [objective_value(model_dual), value.(y)]
-#     return objective_value(model_dual), value.(y)
+# function probs_random(N)
+    
 # end
 
 function greedy_prior_set(N, d, ρ, step = 0.1)
@@ -89,12 +77,12 @@ function greedy_prior(N, d, ρ, step = 0.1, min = true)
 end
 
 function sdp_solver()
-    N, d = 2, 2
+    N, d = 3, 2
 
     # ρ = [random_state(d) for i in 1:N]
     # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
-    ρ = [[1 0 ; 0 0], [0 0 ; 0 1]]
-    #  ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5], [0 0 ; 0 1]]
+    # ρ = [[1 0 ; 0 0], [0 0 ; 0 1]]
+    ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5], [0 0 ; 0 1]]
     # ρ = [[1 0 ; 0 0], [0 0 ; 0 1], [0.5 0.5 ; 0.5 0.5], [0.5 -0.5 ; -0.5 0.5]]
     # ρ = [[1 0 ; 0 0], [0.1464466094067263 0.35355339059327384 ; 0.35355339059327384 0.8535533905932737], [0.1464466094067263 -0.35355339059327384 ; -0.35355339059327384 0.8535533905932737]]
 
