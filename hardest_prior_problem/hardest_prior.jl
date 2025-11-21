@@ -21,22 +21,25 @@ function random_state(d)
     return LinearAlgebra.Hermitian(y / LinearAlgebra.tr(y))
 end
 
-# function probs_recursion(N, sum, step = 0.1)
-#     # mock version
-#     if N == 1
-#         return Matrix{Any}([[sum]], 1, 1)
-#     end
-
-#     prev = probs_recursion(N - 1, sum - step, step)
-
-#     return 
-# end
-
-# function probs_random(N)
+function prob_recursion(N, sum, step = 0.01)
+    if N == 1
+        return [[sum]]
+    end
     
-# end
+    res = Vector{Vector{Float16}}()
+    for p in range(start = 0, step = step, stop = sum)
+        cur_rec = prob_recursion(N - 1, sum - p, step)
+        for vec in cur_rec
+            mid_res = [p]
+            append!(mid_res, vec)
+            append!(res, [mid_res])
+        end
+    end
+    return res
+end
 
 function greedy_prior_set(N, d, ρ, step = 0.1)
+    # ONLY WORKS FOR N = 2
     p0_set = [i for i in range(0, step = step, 1 - step)]
     
     sol_dual_set = Vector{Any}(undef, length(p0_set))
@@ -50,6 +53,7 @@ function greedy_prior_set(N, d, ρ, step = 0.1)
 end
 
 function greedy_prior_min(N, d, ρ, step = 0.1)
+    # ONLY WORKS FOR N = 2
     p0_set = [i for i in range(0, step = step, 1 - step)]
 
     res_min = 1

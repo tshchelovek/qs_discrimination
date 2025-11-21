@@ -22,23 +22,26 @@ LinearAlgebra.tr(ρ[2] * M[1])
 
 
 
-# function prob_recursion(N, sum, step = 0.01)
-#     if N == 1
-#         return sum
-#     end
-    
-#     sol_dual_set = Vector{Any}(undef, length(p0_set))
-
+# f = open("qs_discrimination/hardest_prior_problem/distributions/2_00.txt", "r")
+# m = read(f, String)
+# # m = raw"[1, 0; 0.9, 0.1; 0.8, 0.2; 0.7, 0.3; 0.6, 0.4; 0.5, 0.5; 0.4, 0.6; 0.3, 0.7; 0.2, 0.8; 0.1, 0.9; 0, 1]"
+# # A = Meta.parse(m) 
+# m_spl = split(m, '\n')
+# probs = Matrix{Float16}(undef, length(m_spl))
+# for i in 1:1:length(m_spl)
+#     line_spl = split(m_spl[i])
+#     probs[i] = [Float16(line_spl[1]), Float16(line_spl[2])]
+#     print(probs[i])
 # end
 
-f = open("qs_discrimination/hardest_prior_problem/distributions/2_00.txt", "r")
-m = read(f, String)
-# m = raw"[1, 0; 0.9, 0.1; 0.8, 0.2; 0.7, 0.3; 0.6, 0.4; 0.5, 0.5; 0.4, 0.6; 0.3, 0.7; 0.2, 0.8; 0.1, 0.9; 0, 1]"
-# A = Meta.parse(m) 
-m_spl = split(m, '\n')
-probs = Matrix{Float16}(undef, length(m_spl))
-for i in 1:1:length(m_spl)
-    line_spl = split(m_spl[i])
-    probs[i] = [Float16(line_spl[1]), Float16(line_spl[2])]
-    print(probs[i])
-end
+# x = Matrix{Float64}(undef, 1, 0)
+# append!(x, 1)
+# append!(x, Matrix{Float64}(reduce(hcat, [[5, 4]])))
+# append!(x[1], Matrix{Float64}(reduce(hcat, [5, 4])))
+x = Vector{Vector{Int64}}()
+# append!(x[1], [1])
+# append!(x, [[5, 4]])
+# append!(x[1], [1])
+# println(x)
+
+prob_recursion(3, 1, 0.2)
