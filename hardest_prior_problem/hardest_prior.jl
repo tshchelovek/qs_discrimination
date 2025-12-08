@@ -14,96 +14,98 @@ import Mosek
 module FixedPrior
     include("fixed_prior.jl")
 end
-
-function random_state(d)
-    x = randn(ComplexF64, (d, d))
-    y = x * x'
-    return LinearAlgebra.Hermitian(y / LinearAlgebra.tr(y))
+module Distribs
+    include("distribs.jl")
 end
 
-function prob_recursion(N, sum, step = 0.01)
-    if N == 1
-        return [[sum]]
+function prior_set(N, d, ρ, p_set)
+    sol_dual_set = Vector{Any}(undef, length(p_set))
+
+    for i in range(start = 1, stop = length(p_set))
+        sol_dual = dual_model(N, d, ρ, p_set[i])
+        sol_dual_set[i] = sol_dual
     end
-    
-    res = Vector{Vector{Float16}}()
-    for p in range(start = 0, step = step, stop = sum)
-        cur_rec = prob_recursion(N - 1, sum - p, step)
-        for vec in cur_rec
-            mid_res = [p]
-            append!(mid_res, vec)
-            append!(res, [mid_res])
+    return sol_dual_set
+end
+
+function prior_min(N, d, ρ, p_set)
+    res_min = 2
+    sol_min = [res_min, ρ[1]]
+    p_min = [1, 0]
+
+    for i in range(start = 1, stop = length(p_set))
+        println(p_set[i])
+        sol_dual = FixedPrior.dual_model(N, d, ρ, p_set[i])
+        if sol_dual[1] < res_min
+            sol_min = sol_dual
+            res_min = sol_dual[1]
+            p_min = p_set[i]
         end
     end
-    return res
+    return sol_min, p_min
 end
 
 function greedy_prior_set(N, d, ρ, step = 0.1)
-    # ONLY WORKS FOR N = 2
-    p0_set = [i for i in range(0, step = step, 1 - step)]
-    
-    sol_dual_set = Vector{Any}(undef, length(p0_set))
-    for i in range(start = 1, stop = length(p0_set))
-        p0 = p0_set[i]
-        p = [p0, 1 - p0]
-        sol_dual = dual_model(N, d, ρ, p)
+    p_set = Distribs.discrete_prob_sets(N, step)
+    sol_dual_set = Vector{Any}(undef, length(p_set))
+
+    for i in range(start = 1, stop = length(p_set))
+        sol_dual = dual_model(N, d, ρ, p_set[i])
         sol_dual_set[i] = sol_dual
     end
     return sol_dual_set
 end
 
 function greedy_prior_min(N, d, ρ, step = 0.1)
-    # ONLY WORKS FOR N = 2
-    p0_set = [i for i in range(0, step = step, 1 - step)]
-
-    res_min = 1
+    res_min = 2
     sol_min = [res_min, ρ[1]]
-    p_set = [1, 0]
-    for i in range(start = 1, stop = length(p0_set))
-        p0 = p0_set[i]
-        p = [p0, 1 - p0]
-        sol_dual = FixedPrior.dual_model(N, d, ρ, p)
+    p_min = [1, 0]
+
+    p_set = Distribs.discrete_prob_sets(N, step)
+
+    for i in range(start = 1, stop = length(p_set))
+        println(p_set[i])
+        sol_dual = FixedPrior.dual_model(N, d, ρ, p_set[i])
         if sol_dual[1] < res_min
             sol_min = sol_dual
             res_min = sol_dual[1]
-            p_set = [p0_set[i], 1 - p0_set[i]]
+            p_min = p_set[i]
         end
     end
-    return sol_min, p_set
+    return sol_min, p_min
 end
 
-function greedy_prior(N, d, ρ, step = 0.1, min = true)
-    if min == true
-        return greedy_prior_min(N, d, ρ, step)
-    else
-        return greedy_prior_set(N, d, ρ, step)
-    end
-end
+# function greedy_prior(N, d, ρ, step = 0.1, min = true)
+#     p_set = Distribs.discrete_prob_sets(N, step)
+
+#     if min == true
+#         return greedy_prior_min(N, d, ρ, p_set)
+#     else
+#         return greedy_prior_set(N, d, ρ, p_set)
+#     end
+# end
 
 function sdp_solver()
-    N, d = 3, 2
+    N, d = 2, 2
 
     # ρ = [random_state(d) for i in 1:N]
-    # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
+    ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
     # ρ = [[1 0 ; 0 0], [0 0 ; 0 1]]
-    ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5], [0 0 ; 0 1]]
+    # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5], [0 0 ; 0 1]]
     # ρ = [[1 0 ; 0 0], [0 0 ; 0 1], [0.5 0.5 ; 0.5 0.5], [0.5 -0.5 ; -0.5 0.5]]
     # ρ = [[1 0 ; 0 0], [0.1464466094067263 0.35355339059327384 ; 0.35355339059327384 0.8535533905932737], [0.1464466094067263 -0.35355339059327384 ; -0.35355339059327384 0.8535533905932737]]
 
-    # p = [0, 1]
-    # p = [0.5, 0.5]
-    # p = [0.001, 0.999]
+    # p = [[0, 1]]
+    p = [[0.5, 0.5]]
+    # p = [[0.001, 0.999]]
+    # p = [[0.2, 0.3, 0.5]]
 
-    greedy_dual, greedy_probs = greedy_prior_min(N, d, ρ, 0.05)
+    greedy_dual, greedy_probs = greedy_prior_min(N, d, ρ, p)
 
     check_primal = FixedPrior.primal_model(N, d, ρ, greedy_probs)
-    println(check_primal[1])
-
-    # println(isapprox(sol_primal[1], sol_dual[1]))
-    # println(" = ", greedy_dual[1], "\n  prob_dual = ", sol_dual[1])
+    # println("checking primal problem: ", check_primal[1])
 
     return greedy_dual, greedy_probs
 end
 
 sdp_solver()
-# greedy_prior()

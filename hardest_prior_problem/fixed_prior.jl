@@ -1,5 +1,5 @@
 #=
-hardest_prior:
+fixed_prior:
 - Julia version: 1.10.5
 - Author: ChernyshovaP
 - Date: 2025-11-12
@@ -11,15 +11,15 @@ import Dualization
 import SCS
 import Mosek
 
-function random_state(d)
-    x = randn(ComplexF64, (d, d))
-    y = x * x'
-    return LinearAlgebra.Hermitian(y / LinearAlgebra.tr(y))
+module Distribs
+    include("distribs.jl")
 end
 
-function primal_model(N, d, ρ, p)
+optimizer = SCS.Optimizer
 
-    model = Model(SCS.Optimizer)
+function primal_model(N, d, ρ, p, opt = optimizer)
+
+    model = Model(opt)
     set_silent(model)
 
     E = [@variable(model, [1:d, 1:d] in HermitianPSDCone()) for i in 1:N]
@@ -34,19 +34,14 @@ function primal_model(N, d, ρ, p)
 
     optimize!(model)
     @assert is_solved_and_feasible(model)
-    solution_summary(model)
-
-    objective_value(model)
-
-    0.5 + 0.25 * sum(LinearAlgebra.svdvals(ρ[1] - ρ[2]))
 
     solution = [value.(e) for e in E]
     return objective_value(model), solution
 end
 
-function dual_model(N, d, ρ, p)
+function dual_model(N, d, ρ, p, opt = optimizer)
 
-    model_dual = Model(SCS.Optimizer)
+    model_dual = Model(opt)
     set_silent(model_dual)
 
     y = @variable(model_dual, [1:d, 1:d] in HermitianPSDCone())
@@ -58,22 +53,15 @@ function dual_model(N, d, ρ, p)
         Min, 
         LinearAlgebra.tr(y))
 
-    # print(model_dual)
-
     optimize!(model_dual)
     @assert is_solved_and_feasible(model_dual; dual = true)
-    solution_summary(model_dual)
 
-    objective_value(model_dual)
-
-    # print("Minimal probability p = ", objective_value(model_dual), " is achieved for\n y = ", value.(y))
-    solution = [objective_value(model_dual), value.(y)]
     return objective_value(model_dual), value.(y)
 end
 
-function double_dual_model(N, d, ρ)
+function double_dual_with_q_model(N, d, ρ, opt = optimizer)
 
-    model = Model(SCS.Optimizer)
+    model = Model(opt)
     set_silent(model)
 
     M = [@variable(model, [1:d, 1:d] in HermitianPSDCone()) for i in 1:N]
@@ -89,23 +77,16 @@ function double_dual_model(N, d, ρ)
         q[1] + real(LinearAlgebra.tr(ρ[1] * M[1])),
     )
 
-    print(model)
-
     optimize!(model)
     @assert is_solved_and_feasible(model)
-    solution_summary(model)
-
-    objective_value(model)
-
-    # 0.5 + 0.25 * sum(LinearAlgebra.svdvals(ρ[1] - ρ[2]))
 
     solution = [value.(m) for m in M]
     return objective_value(model), solution
 end
 
-function double_dual_no_q_model(N, d, ρ)
+function double_dual_model(N, d, ρ, opt = optimizer)
 
-    model = Model(SCS.Optimizer)
+    model = Model(opt)
     set_silent(model)
 
     M = [@variable(model, [1:d, 1:d] in HermitianPSDCone()) for i in 1:N]
@@ -119,41 +100,36 @@ function double_dual_no_q_model(N, d, ρ)
         real(LinearAlgebra.tr(ρ[1] * M[1])),
     )
 
-    print(model)
+    # print(model)
 
     optimize!(model)
     @assert is_solved_and_feasible(model)
-    solution_summary(model)
-
-    objective_value(model)
-
-    # 0.5 + 0.25 * sum(LinearAlgebra.svdvals(ρ[1] - ρ[2]))
 
     solution = [value.(m) for m in M]
     return objective_value(model), solution
 end
 
-function sdp_solver()
-    N, d = 2, 2
+function sdp_solver(N = 2, d = 2)
 
-    # ρ = [random_state(d) for i in 1:N]
-    ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
+    # ρ = [Distribs.random_state(d) for i in 1:N]
+    # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
     # ρ = [[1 0 ; 0 0], [0 0 ; 0 1]]
     #  ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5], [0 0 ; 0 1]]
+     ρ = [[1 0 ; 0 0], [0.81 0.39 ; 0.39 0.19], [0.64 0.48 ; 0.48 0.36]]
     # ρ = [[1 0 ; 0 0], [0 0 ; 0 1], [0.5 0.5 ; 0.5 0.5], [0.5 -0.5 ; -0.5 0.5]]
     # ρ = [[1 0 ; 0 0], [0.1464466094067263 0.35355339059327384 ; 0.35355339059327384 0.8535533905932737], [0.1464466094067263 -0.35355339059327384 ; -0.35355339059327384 0.8535533905932737]]
 
     # p = [0, 1]
-    p = [0.5, 0.5]
+    # p = [0.5, 0.5]
     # p = [0.001, 0.999]
+    p = [1 / N for i in 1:N]
 
-    # sol_primal = primal_model(N, d, ρ, p)
+    sol_primal = primal_model(N, d, ρ, p)
     # sol_dual = dual_model(N, d, ρ, p)
-    sol_double_dual = double_dual_no_q_model(N, d, ρ)
+    # sol_double_dual = double_dual_model(N, d, ρ)
 
-    # println(isapprox(sol_primal[1], sol_dual[1]))
     # println("prob_primal = ", sol_primal[1], "\n  prob_dual = ", sol_dual[1])
 end
 
 
-sdp_solver()
+sdp_solver(3, 2)
