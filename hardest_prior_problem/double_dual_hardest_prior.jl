@@ -11,14 +11,17 @@ import Dualization
 import SCS
 import Mosek
 
-module FixedPrior
-    include("fixed_prior.jl")
+module SDPModels
+    include("sdp_models.jl")
 end
 module Distribs
     include("distribs.jl")
 end
 module Measures
     include("measures.jl")
+end
+module Fio
+    include("fio.jl")
 end
 
 # function probs_lp(vals, full_sum)
@@ -36,25 +39,6 @@ end
 #     @objective(model, Min, sum(p.^2))
 #     optimize!(model)
 #     return value.(p)
-# end
-
-function sdp_solver()
-    N, d = 3, 2
-
-    ρ = [random_state(d) for i in 1:N]
-    # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
-    # ρ = [[1 0 ; 0 0], [0 0 ; 0 1]]
-    # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5], [0 0 ; 0 1]]
-    # ρ = [[1 0 ; 0 0], [0.81 0.39 ; 0.39 0.19], [0.64 0.48 ; 0.48 0.36]]
-    # ρ = [[1 0 ; 0 0], [0 0 ; 0 1], [0.5 0.5 ; 0.5 0.5], [0.5 -0.5 ; -0.5 0.5]]
-    # ρ = [[1 0 ; 0 0], [0.1464466094067263 0.35355339059327384 ; 0.35355339059327384 0.8535533905932737], [0.1464466094067263 -0.35355339059327384 ; -0.35355339059327384 0.8535533905932737]] #this almost saturates the bound, 1.975 -> 2=d
-
-    dual_value, dual_solution = FixedPrior.double_dual_model(N, d, ρ)
-    println("Double dual: ", dual_value, "\n", dual_solution)
-
-    println(dual_value * N)
-
-
     #= 
         so far for what i've checked, PGM gives better probability
         (for a different initial problem setting nevertheless)
@@ -74,7 +58,53 @@ function sdp_solver()
     #     products[idx] = val
     # end
     # println(products)
+# end
 
+function simulator_mixed(N, d)
+
+    ρ = [Ket.random_state(d) for i in 1:N]
+    # println("Generated states:\n", ρ)
+    println(LinearAlgebra.tr(ρ[1] * ρ[1]))
+    
+    dual_value, dual_solution = SDPModels.double_dual_model(N, d, ρ)
+    # println("Double dual: ", dual_value, "\n", dual_solution)
+
+    # println("Sanity check: 2 >= ", dual_value * N)
+
+    return ρ, dual_value, dual_solution
 end
 
-sdp_solver()
+function simulator_pure(N, d)
+
+    ρ = [Ket.random_state(d, 1) for i in 1:N]
+    # println("Generated states:\n", ρ)
+    println(LinearAlgebra.tr(ρ[1] * ρ[1]))
+    
+    dual_value, dual_solution = SDPModels.double_dual_model(N, d, ρ)
+    # println("Double dual: ", dual_value, "\n", dual_solution)
+
+    # println("Sanity check: 2 >= ", dual_value * N)
+
+    return ρ, dual_value, dual_solution
+end
+
+function main()
+    N = 2
+    d = 10
+
+    #=
+        before running check to not overwrite data!
+    =#
+    
+    for i in 1:100
+        rho, objective_value, objective_solution = simulator_mixed(N, d)
+        # Fio.write_txt("data/double_dual/mixed", rho, objective_value, objective_solution)
+    end
+
+    for i in 1:100
+        rho, objective_value, objective_solution = simulator_pure(N, d)
+        # Fio.write_txt("data/double_dual/pure", rho, objective_value, objective_solution)
+    end
+end
+
+main()
