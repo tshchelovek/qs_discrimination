@@ -17,11 +17,17 @@ function parsing_json()
     # end
 end
 
-function writing_txt(name, rho, objective_value, objective_solution = [], prior = [])
+function write_txt(name, rho, objective_value, objective_solution = [[]], prior = [[]])
     N = size(rho)[1]
     d = size(rho[1])[1]
     file_name = string(name, "_", N, "_", d, ".txt")
     # file_name = string("data/", name, "_", N, "_", d, ".txt")
+
+    precision = 4
+    rho = [round.(rho[i], digits = precision + 2) for i in 1:size(rho)[1]]
+    objective_value = round(objective_value, digits = precision)
+    objective_solution = [round.(objective_solution[i], digits = precision) for i in 1:size(objective_solution)[1]]
+    prior = [round.(prior[i], digits = precision) for i in 1:size(prior)[1]]
 
     try
         open(file_name, "a") do file
@@ -40,10 +46,11 @@ function writing_txt(name, rho, objective_value, objective_solution = [], prior 
     end
 end
 
-function reading_txt(file_name, N = 0, d = 0)
+function read_txt(file_name, N = 0, d = 0)
     if N > 0 && d > 0
         file_name = string(file_name, "_", N, "_", d, ".txt")
     end
+    println(file_name)
     try
         open(file_name, "r") do file
             result = []
@@ -62,6 +69,27 @@ function reading_txt(file_name, N = 0, d = 0)
     end
 end
 
+function analyze_value_txt(file_name, N = 0, d = 0)
+    if N > 0 && d > 0
+        file_name = string(file_name, "_", N, "_", d, ".txt")
+    end
+    try
+        open(file_name, "r") do file
+            result = 0
+            len = 0
+            for line in eachline(file)
+                rho_str, objective_value_str, objective_solution_str, prior_str = rsplit(line, ":")
+                objective_value = Meta.parse(objective_value_str)
+                result += objective_value
+                len += 1
+            end
+            return round(result / len, digits = 4)
+        end
+    catch e
+        println("File ", file_name, " doesn't exist!")
+    end
+end
+
 function main()
     M = [[0.640000272025707 + 0.0im -0.1600006833360107 + 0.0im; -0.1600006833360107 + 0.0im 0.03999974346694657 + 0.0im], 
          [0.31999975198746244 + 0.0im 0.3200011567343735 + 0.0im; 0.3200011567343735 - 0.0im 0.3200008315665967 + 0.0im], 
@@ -71,12 +99,13 @@ function main()
     obj_val = 1
     prior = [1/3, 1/3, 1/3]
 
-    # writing_txt("data/test", rho1, obj_val, M, prior)
-    # writing_txt("data/test", rho2, obj_val, M, prior)
-    # cases = reading_txt("data/test", 3, 2)
-    # rho, objective_value, objective_solution, prior = cases[1]
-    # rho
+    # write_txt("data/test", rho1, obj_val, M, prior)
+    # write_txt("data/test", rho2, obj_val, M, prior)
+    # cases = read_txt("data/test", 3, 2)
+    # rho, objective_value, objective_solution, prior = cases[end]
+    # objective_solution
 
+    analyze_value_txt("data/double_dual/mixed_2_2.txt")
 end
 
 main()
