@@ -5,14 +5,16 @@ distribs:
 - Date: 2025-11-25
 =#
 
-using IsApprox, Random
+using IsApprox, Random, Ket
 import LinearAlgebra
+
 
 function discrete_prob_sets(N, step = 0.1, sum = 1)
     #= 
     generates all sets of discrete probability distributions
     for a given number of states and precision
     =#
+    sum = round(sum, digits = 6)
 
     if N == 1
         return [[sum]]
@@ -57,4 +59,43 @@ function iterate_over_disc(start = 0, stop = 1, step = 0.1, phi = 0)
     return result
 end
 
+function rotate_states(rho_set, precision = 5)
+    # rotate states to diagonalize the first state
+    t, z, vals = LinearAlgebra.schur(rho_set[1])
+    rotated_rho = [z^(-1) * rho_set[i] * z for i in 1:size(rho_set)[1]]
+    rotated_rho = [round.(rotated_rho[i], digits = precision) for i in 1:size(rho_set)[1]]
+    return rotated_rho
+end
+
+function trace_distance(rho, sigma)
+    return LinearAlgebra.tr(LinearAlgebra.sqrt((rho - sigma)' * (rho - sigma))) / 2
+end
+
+function distance_map(rho_set, precision = 5)
+    d = size(rho_set)[1]
+    println(d)
+    result = Matrix{Float64}(undef, (d, d))
+    println(result)
+
+    for i in 1:d
+        println(result[i,i])
+        result[i,i] = 0
+        for j in i+1:d
+            t = round(trace_distance(rho_set[i], rho_set[j]), digits = precision)
+            result[i,j] = t
+            result[j,i] = t
+        end
+    end
+    return result
+end
+
 # need a func for generating set of N density matrices
+
+# ans = discrete_prob_sets(3)
+# println("done.")
+
+# a = Matrix{ComplexF64}([0.59673 + 0.0im 0.171285 + 0.216656im; 0.171285 - 0.216656im 0.40327 + 0.0im])
+# b = Matrix{ComplexF64}([0.284332 + 0.0im 0.159722 - 0.416004im; 0.159722 + 0.416004im 0.715668 + 0.0im])
+# c, d = rotate_states([a, b])
+
+# distance_map([a, b, c, d])
