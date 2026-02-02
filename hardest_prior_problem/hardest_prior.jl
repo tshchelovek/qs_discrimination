@@ -28,46 +28,14 @@ end
 #     return sol_dual_set
 # end
 
-# function prior_min(N, d, ρ, p_set)
-#     res_min = 2
-#     sol_min = [res_min, ρ[1]]
-#     p_min = [1, 0]
-
-#     for i in range(start = 1, stop = length(p_set))
-#         println(p_set[i])
-#         sol_dual = SDPModels.dual_model(N, d, ρ, p_set[i])
-#         if sol_dual[1] < res_min
-#             sol_min = sol_dual
-#             res_min = sol_dual[1]
-#             p_min = p_set[i]
-#         end
-#     end
-#     return sol_min, p_min
-# end
-
-function greedy_prior_set(N, d, ρ, step = 0.1)
-    p_set = Distribs.discrete_prob_sets(N, step)
-    sol_dual_set = Vector{Any}(undef, length(p_set))
-
-    for i in range(start = 1, step = 1, stop = length(p_set))
-        print(p_set[i], ": ")
-        sol_dual = SDPModels.dual_model(N, d, ρ, p_set[i])
-        sol_dual_set[i] = tuple(sol_dual, p_set[i])
-        println(sol_dual[1])
-    end
-    return sol_dual_set
-end
-
-function greedy_prior_min(N, d, ρ, step = 0.1, precision = 4)
+function prior_min(N, d, ρ)
     res_min = 2
     sol_min = [res_min, ρ[1]]
     p_min = [1, 0]
 
-    p_set = Distribs.discrete_prob_sets(N, step)
-
     for i in range(start = 1, stop = length(p_set))
-        sol_dual = SDPModels.dual_model(N, d, ρ, p_set[i])
-        sol_dual = (round(sol_dual[1], digits = precision), sol_dual[2])
+        println(p_set[i])
+        sol_dual = SDPModels.dual_model(N, d, ρ)
         if sol_dual[1] < res_min
             sol_min = sol_dual
             res_min = sol_dual[1]
@@ -76,6 +44,38 @@ function greedy_prior_min(N, d, ρ, step = 0.1, precision = 4)
     end
     return sol_min, p_min
 end
+
+# function greedy_prior_set(N, d, ρ, step = 0.1)
+#     p_set = Distribs.discrete_prob_sets(N, step)
+#     sol_dual_set = Vector{Any}(undef, length(p_set))
+
+#     for i in range(start = 1, step = 1, stop = length(p_set))
+#         print(p_set[i], ": ")
+#         sol_dual = SDPModels.dual_model_with_p(N, d, ρ, p_set[i])
+#         sol_dual_set[i] = tuple(sol_dual, p_set[i])
+#         println(sol_dual[1])
+#     end
+#     return sol_dual_set
+# end
+
+# function greedy_prior_min(N, d, ρ, step = 0.1, precision = 4)
+#     res_min = 2
+#     sol_min = [res_min, ρ[1]]
+#     p_min = [1, 0]
+
+#     p_set = Distribs.discrete_prob_sets(N, step)
+
+#     for i in range(start = 1, stop = length(p_set))
+#         sol_dual = SDPModels.dual_model_with_p(N, d, ρ, p_set[i])
+#         sol_dual = (round(sol_dual[1], digits = precision), sol_dual[2])
+#         if sol_dual[1] < res_min
+#             sol_min = sol_dual
+#             res_min = sol_dual[1]
+#             p_min = p_set[i]
+#         end
+#     end
+#     return sol_min, p_min
+# end
 
 # function greedy_prior(N, d, ρ, step = 0.1, min = true)
 #     p_set = Distribs.discrete_prob_sets(N, step)
@@ -123,29 +123,67 @@ end
 
 function simulator(filename, N, d, step = 0.1, precision = 4)
     filename_read = string("data/double_dual/", filename)
-    filename_write = string("data/dual/", filename)
+    filename_write = string("data/dual/", filename, "_", string(step))
 
     cases = Fio.read_txt(filename_read, N, d)
 
     for i in 1:size(cases)[1]
         rho, objective_value, objective_solution, prior = cases[i]
-        (obj_value, obj_solution), obj_prior = greedy_prior_min(N, d, rho, step, precision)
+        # (obj_value, obj_solution), obj_prior = greedy_prior_min(N, d, rho, step, precision)
+        (obj_value, obj_solution), obj_prior = SDPModels.dual_model(N, d, rho)
+        println(obj_value)
         # Fio.write_txt(filename_write, rho, obj_value, obj_solution, obj_prior)
     end
 
     return
 end
 
+function simulator_rotated(filename, N, d, precision = 4)
+    filename_read = string("data/dual/", filename)
+    filename_write = string("data/dual/rotated_", filename)
+
+    cases = Fio.read_txt(filename_read, N, d)
+    to_sort = Dict()
+
+    for i in 1:size(cases)[1]
+        rho, objective_value, objective_solution, prior = cases[i]
+        # (obj_value, obj_solution), obj_prior = greedy_prior_min(N, d, rho, step, precision)
+        rho_rotated = Distribs.rotate_states(rho)
+        # to_sort[prior] = tuple(rho_rotated, objective_value, objective_solution)
+        Fio.write_txt(filename_write, rho_rotated, objective_value, [], prior)
+    end
+    # print(to_sort)
+
+    return
+end
+
+function simulator_classical(N, d)
+
+    ρ = [Matrix{Float64}(LinearAlgebra.diagm(LinearAlgebra.diag(Ket.random_state(d)))) for i in 1:N]
+    # println("Generated states:\n", ρ)
+    # println(LinearAlgebra.tr(ρ[1] * ρ[1]))
+    
+    dual_value, dual_solution = SDPModels.double_dual_model(N, d, ρ)
+    # println("Double dual: ", dual_value, "\n", dual_solution)
+
+    # println("Sanity check: 2 >= ", dual_value * N)
+
+    return ρ, dual_value, dual_solution
+end
+
 function main()
-    N = 3
+    N = 2
     d = 2
     
+    simulator_rotated("pure", N, d)
+
     # simulator("mixed", N, d, 0.01)
     # simulator("pure", N, d, 0.01)
+    simulator("classical", N, d, 0.01)
 
     # Fio.analyze_value_txt("data/dual/pure", N, d) # / Fio.analyze_value_txt("data/primal/pure", N, d)
 
-    sdp_solver()
+    # sdp_solver()
 end
 
 main()

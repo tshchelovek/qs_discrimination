@@ -88,22 +88,41 @@ function simulator_pure(N, d)
     return ρ, dual_value, dual_solution
 end
 
+function simulator_classical(N, d)
+
+    ρ = [Matrix{Float64}(LinearAlgebra.diagm(LinearAlgebra.diag(Ket.random_state(d)))) for i in 1:N]
+    # println("Generated states:\n", ρ)
+    # println(LinearAlgebra.tr(ρ[1] * ρ[1]))
+    
+    dual_value, dual_solution = SDPModels.double_dual_model(N, d, ρ)
+    # println("Double dual: ", dual_value, "\n", dual_solution)
+
+    # println("Sanity check: 2 >= ", dual_value * N)
+
+    return ρ, dual_value, dual_solution
+end
+
 function main()
     N = 2
-    d = 10
+    d = 2
 
     #=
         before running check to not overwrite data!
     =#
-    
+
     for i in 1:100
         rho, objective_value, objective_solution = simulator_mixed(N, d)
-        # Fio.write_txt("data/double_dual/mixed", rho, objective_value, objective_solution)
+        # Fio.write_txt("data/special_cases/fully_mixed", rho, objective_value, objective_solution)
     end
 
     for i in 1:100
-        rho, objective_value, objective_solution = simulator_pure(N, d)
+        # rho, objective_value, objective_solution = simulator_pure(N, d)
         # Fio.write_txt("data/double_dual/pure", rho, objective_value, objective_solution)
+    end
+
+    for i in 1:100
+        # rho, objective_value, objective_solution = simulator_classical(N, d)
+        # Fio.write_txt("data/double_dual/classical", rho, objective_value, objective_solution)
     end
 end
 

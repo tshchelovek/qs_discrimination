@@ -5,7 +5,7 @@ just a calculator:
 - Date: 2025-11-12
 =#
 
-using JuMP
+using JuMP, Ket
 import LinearAlgebra
 import SCS
 
@@ -57,3 +57,19 @@ sum_rho = sum(rho)
 lam * rho[3] * lam
 
 sqrt(1 - 0.8 * 0.8)
+
+# this POVM was given by putting rho and optimal prior into primal model
+M = Matrix{ComplexF64}[[0.6993282587586762 + 0.0im 0.1738128474778752 + 0.4243045087800847im; 0.1738128474778752 - 0.4243045087800847im 0.3006456148795022 + 0.0im], 
+                        [0.3006716796450588 + 0.0im -0.17381286452957825 - 0.4243045528724809im; -0.17381286452957825 + 0.4243045528724809im 0.6993543531036913 + 0.0im]]
+# this POVM was given by double dual problem formulation
+M_prime = Matrix{ComplexF64}[[0.7265 + 0.0im 0.1592 + 0.3854im; 0.1592 - 0.3854im 0.3646 + 0.0im], [0.2735 + 0.0im -0.1592 - 0.3854im; -0.1592 + 0.3854im 0.6354 + 0.0im]]
+rho = Matrix{ComplexF64}[[0.59673 + 0.0im 0.171285 + 0.216656im; 0.171285 - 0.216656im 0.40327 + 0.0im], 
+                        [0.284332 + 0.0im 0.159722 - 0.416004im; 0.159722 + 0.416004im 0.715668 + 0.0im]]
+
+res = [LinearAlgebra.tr(rho[1] * M[1]), LinearAlgebra.tr(rho[2] * M[2])]
+res_prime = [LinearAlgebra.tr(rho[1] * M_prime[1]), LinearAlgebra.tr(rho[2] * M_prime[2])]
+println(round.(res, digits = 3), ", ", 0.8 * res[1] + 0.2 * res[2])
+println(round.(res_prime, digits = 3), ", ", 0.8 * res_prime[1] + 0.2 * res_prime[2])
+
+# Ket.bloch_vector(rho[1]), Ket.bloch_vector(rho[2])
+Ket.bloch_vector([rho[1]])

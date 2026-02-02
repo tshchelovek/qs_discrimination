@@ -5,8 +5,11 @@ fio:
 - Date: 2025-12-03
 =#
 
-using Parsers
+using Parsers, LinearAlgebra
 using JSON3
+module Distribs
+    include("distribs.jl")
+end
 
 function parsing_json()
     # json_string = """{"a": 1, "b": "hello, world"}"""
@@ -75,15 +78,77 @@ function analyze_value_txt(file_name, N = 0, d = 0)
     end
     try
         open(file_name, "r") do file
+            unif = [1/N for i in 1:N]
+            furth_distrib = [1/N for i in 1:N]
+            println(furth_distrib)
+            furth_dist = 0
+            min_val = 1
+            min_rho = Vector{Vector{Complex}}()
             result = 0
             len = 0
             for line in eachline(file)
                 rho_str, objective_value_str, objective_solution_str, prior_str = rsplit(line, ":")
                 objective_value = Meta.parse(objective_value_str)
+                prior = Meta.parse(prior_str)
+                # println(prior)
+
+                # dist = norm(unif - prior)
+                # if dist > furth_dist
+                #     furth_dist = dist
+                #     furth_distrib = prior
+                # end
+                if min_val > objective_value
+                    min_val = objective_value
+                    min_rho = Meta.parse(rho_str)
+                end
                 result += objective_value
                 len += 1
             end
-            return round(result / len, digits = 4)
+            return tuple(min_val, min_rho, round(result / len, digits = 4), furth_distrib)
+        end
+    catch e
+        println("File ", file_name, " doesn't exist!")
+    end
+end
+
+function analyze_prior_txt(file_name, N = 0, d = 0)
+    if N > 0 && d > 0
+        file_name = string(file_name, "_", N, "_", d, ".txt")
+    end
+    try
+        open(file_name, "r") do file
+            unif = Vector{Float64}([1/N for i in 1:N])
+            furth_distrib = unif
+            # println(LinearAlgebra.norm(unif - furth_distrib))
+            furth_dist = 0
+            min_val = 1
+            min_rho = Vector{Vector{Complex}}()
+            result = 0
+            len = 0
+            for line in eachline(file)
+                rho_str, objective_value_str, objective_solution_str, prior_str = rsplit(line, ":")
+                objective_value = eval(Meta.parse(objective_value_str))
+                prior = eval(Meta.parse(prior_str))
+                println(prior_str)
+                println(prior)
+                println(type(prior))
+                println(Vector{Float64}(prior[1]))
+                # println(LinearAlgebra.norm(Vector{Float64}(prior)))
+                # println(LinearAlgebra.norm(unif - prior))
+
+                # dist = norm(unif - prior)
+                # if dist > furth_dist
+                #     furth_dist = dist
+                #     furth_distrib = prior
+                # end
+                if min_val > objective_value
+                    min_val = objective_value
+                    min_rho = eval(Meta.parse(rho_str))
+                end
+                result += objective_value
+                len += 1
+            end
+            return tuple(min_val, min_rho, round(result / len, digits = 4), furth_distrib)
         end
     catch e
         println("File ", file_name, " doesn't exist!")
@@ -105,7 +170,11 @@ function main()
     # rho, objective_value, objective_solution, prior = cases[end]
     # objective_solution
 
-    analyze_value_txt("data/double_dual/mixed_2_2.txt")
+    # min_val, min_rho, ave_val = analyze_value_txt("data/double_dual/mixed_2_2.txt")
+    min_val, min_rho, ave_val, distrib = analyze_prior_txt("data/dual/mixed", 2, 2)
+    # min_rho = Distribs.rotate_states([min_rho])
+    # ADD WORST DISTRIB !!!!
+
 end
 
 main()
