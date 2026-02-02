@@ -61,8 +61,6 @@ end
 
 function dual_model(N, d, ρ, opt = optimizer)
 
-    # TODO add prior as a variable
-
     model_dual = Model(opt)
     set_silent(model_dual)
 
@@ -84,7 +82,7 @@ function dual_model(N, d, ρ, opt = optimizer)
     return objective_value(model_dual), value.(y), value.(p)
 end
 
-function double_dual_with_q_model(N, d, ρ, opt = optimizer)
+function double_dual_model_with_q(N, d, ρ, opt = optimizer)
 
     model = Model(opt)
     set_silent(model)
