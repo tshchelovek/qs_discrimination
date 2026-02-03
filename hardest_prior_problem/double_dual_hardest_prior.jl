@@ -60,13 +60,13 @@ end
     # println(products)
 # end
 
-function simulator_mixed(N, d)
+function simulator_mixed(d, N)
 
     ρ = [Ket.random_state(d) for i in 1:N]
     # println("Generated states:\n", ρ)
     println(LinearAlgebra.tr(ρ[1] * ρ[1]))
     
-    dual_value, dual_solution = SDPModels.double_dual_model(N, d, ρ)
+    dual_value, dual_solution = SDPModels.double_dual_model(d, N, ρ)
     # println("Double dual: ", dual_value, "\n", dual_solution)
 
     # println("Sanity check: 2 >= ", dual_value * N)
@@ -74,27 +74,27 @@ function simulator_mixed(N, d)
     return ρ, dual_value, dual_solution
 end
 
-function simulator_pure(N, d)
+function simulator_pure(d, N)
 
     ρ = [Ket.random_state(d, 1) for i in 1:N]
     # println("Generated states:\n", ρ)
     println(LinearAlgebra.tr(ρ[1] * ρ[1]))
     
-    dual_value, dual_solution = SDPModels.double_dual_model(N, d, ρ)
-    # println("Double dual: ", dual_value, "\n", dual_solution)
+    dual_value, dual_solution = SDPModels.double_dual_model(d, N, ρ)
+    println("Double dual: ", dual_value, "\n", dual_solution)
 
-    # println("Sanity check: 2 >= ", dual_value * N)
+    println("Sanity check: 2 >= ", dual_value * N)
 
     return ρ, dual_value, dual_solution
 end
 
-function simulator_classical(N, d)
+function simulator_classical(d, N)
 
     ρ = [Matrix{Float64}(LinearAlgebra.diagm(LinearAlgebra.diag(Ket.random_state(d)))) for i in 1:N]
     # println("Generated states:\n", ρ)
     # println(LinearAlgebra.tr(ρ[1] * ρ[1]))
     
-    dual_value, dual_solution = SDPModels.double_dual_model(N, d, ρ)
+    dual_value, dual_solution = SDPModels.double_dual_model(d, N, ρ)
     # println("Double dual: ", dual_value, "\n", dual_solution)
 
     # println("Sanity check: 2 >= ", dual_value * N)
@@ -103,25 +103,25 @@ function simulator_classical(N, d)
 end
 
 function main()
-    N = 2
     d = 2
+    N = 3
 
     #=
         before running check to not overwrite data!
     =#
 
     for i in 1:100
-        rho, objective_value, objective_solution = simulator_mixed(N, d)
+        rho, objective_value, objective_solution = simulator_mixed(d, N)
         # Fio.write_txt("data/special_cases/fully_mixed", rho, objective_value, objective_solution)
     end
 
     for i in 1:100
-        # rho, objective_value, objective_solution = simulator_pure(N, d)
+        rho, objective_value, objective_solution = simulator_pure(d, N)
         # Fio.write_txt("data/double_dual/pure", rho, objective_value, objective_solution)
     end
 
     for i in 1:100
-        # rho, objective_value, objective_solution = simulator_classical(N, d)
+        rho, objective_value, objective_solution = simulator_classical(d, N)
         # Fio.write_txt("data/double_dual/classical", rho, objective_value, objective_solution)
     end
 end

@@ -23,8 +23,8 @@ end
 function write_txt(name, rho, objective_value, objective_solution = [[]], prior = [[]])
     N = size(rho)[1]
     d = size(rho[1])[1]
-    file_name = string(name, "_", N, "_", d, ".txt")
-    # file_name = string("data/", name, "_", N, "_", d, ".txt")
+    file_name = string(name, "_", d, "_", N, ".txt")
+    # file_name = string("data/", name, "_", d, "_", N, ".txt")
 
     precision = 4
     rho = [round.(rho[i], digits = precision + 2) for i in 1:size(rho)[1]]
@@ -49,9 +49,9 @@ function write_txt(name, rho, objective_value, objective_solution = [[]], prior 
     end
 end
 
-function read_txt(file_name, N = 0, d = 0)
+function read_txt(file_name, d = 0, N = 0)
     if N > 0 && d > 0
-        file_name = string(file_name, "_", N, "_", d, ".txt")
+        file_name = string(file_name, "_", d, "_", N, ".txt")
     end
     println(file_name)
     try
@@ -72,9 +72,9 @@ function read_txt(file_name, N = 0, d = 0)
     end
 end
 
-function analyze_value_txt(file_name, N = 0, d = 0)
-    if N > 0 && d > 0
-        file_name = string(file_name, "_", N, "_", d, ".txt")
+function analyze_value_txt(file_name, d = 0, N = 0)
+    if d > 0 && N > 0
+        file_name = string(file_name, "_", d, "_", N, ".txt")
     end
     try
         open(file_name, "r") do file
@@ -111,9 +111,9 @@ function analyze_value_txt(file_name, N = 0, d = 0)
     end
 end
 
-function analyze_prior_txt(file_name, N = 0, d = 0)
-    if N > 0 && d > 0
-        file_name = string(file_name, "_", N, "_", d, ".txt")
+function analyze_prior_txt(file_name, d = 0, N = 0)
+    if d > 0 && N > 0
+        file_name = string(file_name, "_", d, "_", N, ".txt")
     end
     try
         open(file_name, "r") do file
@@ -171,7 +171,7 @@ function main()
     # objective_solution
 
     # min_val, min_rho, ave_val = analyze_value_txt("data/double_dual/mixed_2_2.txt")
-    min_val, min_rho, ave_val, distrib = analyze_prior_txt("data/dual/mixed", 2, 2)
+    # min_val, min_rho, ave_val, distrib = analyze_prior_txt("data/dual/mixed", 2, 2)
     # min_rho = Distribs.rotate_states([min_rho])
     # ADD WORST DISTRIB !!!!
 

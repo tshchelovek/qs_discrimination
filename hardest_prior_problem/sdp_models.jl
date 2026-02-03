@@ -17,7 +17,7 @@ end
 
 optimizer = SCS.Optimizer
 
-function primal_model(N, d, ρ, p = [1/N for i in 1:N], opt = optimizer)
+function primal_model(d, N, ρ, p = [1/N for i in 1:N], opt = optimizer)
 
     model = Model(opt)
     set_silent(model)
@@ -39,7 +39,7 @@ function primal_model(N, d, ρ, p = [1/N for i in 1:N], opt = optimizer)
     return objective_value(model), solution
 end
 
-function dual_model_with_p(N, d, ρ, p, opt = optimizer)
+function dual_model_with_p(d, N, ρ, p, opt = optimizer)
 
     model_dual = Model(opt)
     set_silent(model_dual)
@@ -59,7 +59,7 @@ function dual_model_with_p(N, d, ρ, p, opt = optimizer)
     return objective_value(model_dual), value.(y)
 end
 
-function dual_model(N, d, ρ, opt = optimizer)
+function dual_model(d, N, ρ, opt = optimizer)
 
     model_dual = Model(opt)
     set_silent(model_dual)
@@ -82,7 +82,7 @@ function dual_model(N, d, ρ, opt = optimizer)
     return objective_value(model_dual), value.(y), value.(p)
 end
 
-function double_dual_model_with_q(N, d, ρ, opt = optimizer)
+function double_dual_model_with_q(d, N, ρ, opt = optimizer)
 
     model = Model(opt)
     set_silent(model)
@@ -107,7 +107,7 @@ function double_dual_model_with_q(N, d, ρ, opt = optimizer)
     return objective_value(model), solution
 end
 
-function double_dual_model(N, d, ρ, opt = optimizer)
+function double_dual_model(d, N, ρ, opt = optimizer)
 
     model = Model(opt)
     set_silent(model)
@@ -132,7 +132,7 @@ function double_dual_model(N, d, ρ, opt = optimizer)
     return objective_value(model), solution
 end
 
-function sdp_solver(N = 2, d = 2)
+function sdp_solver(d = 2, N = 2)
 
     # ρ = [Distribs.random_state(d) for i in 1:N]
     # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
@@ -152,15 +152,14 @@ function sdp_solver(N = 2, d = 2)
     # p = [0, 1]
     # p = [0.5, 0.5]
     # p = [0.001, 0.999]
-    p = [1 / N for i in 1:N]
+    # p = [1 / N for i in 1:N]
 
-    # sol_primal = primal_model(N, d, ρ, p)
-    # sol_dual = dual_model_with_p(N, d, ρ, p)
-    sol_dual = dual_model(N, d, ρ)
-    # sol_double_dual = double_dual_model(N, d, ρ)
+    # sol_primal = primal_model(d, N, ρ, p)
+    # sol_dual = dual_model(d, N, ρ)
+    sol_double_dual = double_dual_model(d, N, ρ)
 
     # println("prob_primal = ", sol_primal[1], "\n  prob_dual = ", sol_dual[1])
 end
 
 
-sdp_solver(2, 3)
+sdp_solver(2, 2)
