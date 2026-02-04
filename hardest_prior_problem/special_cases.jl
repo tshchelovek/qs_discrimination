@@ -24,7 +24,7 @@ module Fio
     include("fio.jl")
 end
 
-function simulator_mixed(N, d)
+function simulator_mixed(d, N)
     # all the same random state N times
 
     state = Ket.random_state(d)
@@ -32,7 +32,7 @@ function simulator_mixed(N, d)
     println("Generated states:\n", ρ)
     # println(LinearAlgebra.tr(ρ[1] * ρ[1]))
     
-    # dual_value, dual_solution = SDPModels.double_dual_model(N, d, ρ)
+    # dual_value, dual_solution = SDPModels.double_dual_model(d, N, ρ)
     # println("Double dual: ", dual_value, "\n", dual_solution)
 
     # println("Sanity check: 2 >= ", dual_value * N)
@@ -40,7 +40,27 @@ function simulator_mixed(N, d)
     return ρ, dual_value, dual_solution
 end
 
-function simulator_mixed(N, d)
+function simulator_mixed_covariant(d, N)
+    # all the same random state N times
+
+    state = Ket.random_state(d)
+    unitary = Ket.random_unitary(d)
+    ρ = [state for i in 1:N]
+    for i in 2:N
+        ρ[i] = Hermitian(unitary^i * state * unitary'^i)
+    end
+    println("Generated states:\n", ρ)
+    # println(LinearAlgebra.tr(ρ[1] * ρ[1]))
+    
+    dual_value, dual_solution, dual_prior = SDPModels.dual_model(d, N, ρ)
+    # println("Double dual: ", dual_value, "\n", dual_solution)
+
+    # println("Sanity check: 2 >= ", dual_value * N)
+
+    return ρ, dual_value, dual_solution, dual_prior
+end
+
+function simulator_mixed(d, N)
     # "normalized" - the first state is put to fully mixed one
 
     ρ = [Ket.random_state(d) for i in 1:N]
@@ -48,7 +68,7 @@ function simulator_mixed(N, d)
     println("Generated states:\n", ρ)
     # println(LinearAlgebra.tr(ρ[1] * ρ[1]))
     
-    # dual_value, dual_solution = SDPModels.double_dual_model(N, d, ρ)
+    # dual_value, dual_solution = SDPModels.double_dual_model(d, N, ρ)
     # println("Double dual: ", dual_value, "\n", dual_solution)
 
     # println("Sanity check: 2 >= ", dual_value * N)
@@ -56,7 +76,7 @@ function simulator_mixed(N, d)
     return ρ, dual_value, dual_solution
 end
 
-function simulation_triangle_ineq(file_name, N = 0, d = 0)
+function simulation_triangle_ineq(file_name, d = 0, N = 0)
     #= 
     testing if solution to double dual forms a well-defined distance on the set of states
     since the other three conditions can be easily achieved by renormalizing - d(x,x)=0, d(x,y)>0, d(x,y)=d(y,x)
@@ -65,23 +85,49 @@ function simulation_triangle_ineq(file_name, N = 0, d = 0)
     okay it works analitically but it's still not a metric
     =#
 
-    data = Fio.read_txt(file_name, N, d)
+    data = Fio.read_txt(file_name, d, N)
     data[1]
 end
 
-function main()
-    N = 2
+function simulator_spherical_design()
+    des321 = [[0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.5 - 0.0im; -0.5 + 0.0im 0.5 + 0.0im]]
+    des331 = [[0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.25 - 0.4330127018922193im; -0.25 + 0.4330127018922193im 0.5 + 0.0im], [0.5 + 0.0im -0.25 + 0.4330127018922193im; -0.25 - 0.4330127018922193im 0.5 + 0.0im]]
+    des342 = [[0.7886751345948129 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im]]
+    des351 = [[0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.5 - 0.0im; -0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.25 - 0.4330127018922193im; -0.25 + 0.4330127018922193im 0.5 + 0.0im], [0.5 + 0.0im -0.25 + 0.4330127018922193im; -0.25 - 0.4330127018922193im 0.5 + 0.0im]]
+    des363 = [[0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.5 - 0.0im; -0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im 0.0 - 0.5im; 0.0 + 0.5im 0.5 + 0.0im], [0.5 + 0.0im 0.0 + 0.5im; 0.0 - 0.5im 0.5 + 0.0im], [1.0 + 0.0im 0.0 + 0.0im; 0.0 + 0.0im 0.0 + 0.0im], [0 0; 0 1]]
+    des372 = [[1.0 + 0.0im 0.0 + 0.0im; 0.0 + 0.0im 0.0 + 0.0im], [0.19618739074461747 + 0.0im 0.3971119470091982 + 0.0im; 0.3971119470091982 + 0.0im 0.8038126092553826 + 0.0im], [0.19618739074461747 + 0.0im -0.1985559735045991 - 0.34390903425626546im; -0.1985559735045991 + 0.34390903425626546im 0.8038126092553826 + 0.0im], [0.19618739074461747 + 0.0im -0.1985559735045991 + 0.34390903425626546im; -0.1985559735045991 - 0.34390903425626546im 0.8038126092553826 + 0.0im], [0.6371459425887157 + 0.0im 0.4808232423993796 + 0.0im; 0.4808232423993796 + 0.0im 0.3628540574112841 + 0.0im], [0.6371459425887157 + 0.0im -0.2404116211996898 - 0.4164051426478659im; -0.2404116211996898 + 0.4164051426478659im 0.36285405741128424 + 0.0im], [0.6371459425887157 + 0.0im -0.2404116211996898 + 0.4164051426478659im; -0.2404116211996898 - 0.4164051426478659im 0.36285405741128424 + 0.0im]]
+    des383 = [[0.7886751345948129 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im]]
+
     d = 2
+    N = 8
+    ρ = des383
+    
+    precision = 4
+
+    dual_value, dual_solution, dual_prior = SDPModels.dual_model(d, N, ρ)
+    println(round(dual_value, digits = precision), ' ', round.(dual_prior, digits = precision))
+    primal_value, primal_solution = SDPModels.primal_model(d, N, ρ, dual_prior)
+    println("Primal POVM:\n", [round.(primal_solution[i], digits = precision) for i in 1:size(primal_solution)[1]])
+    double_dual_value, double_dual_solution = SDPModels.double_dual_model(d, N, ρ)
+    println("Double dual POVM:\n", [round.(double_dual_solution[i], digits = precision) for i in 1:size(double_dual_solution)[1]])
+end
+
+function main()
+    d = 2
+    N = 4
 
     #=
         before running check to not overwrite data!
     =#
 
     for i in 1:100
-        rho, objective_value, objective_solution = simulation_triangle_ineq(N, d)
-        # Fio.write_txt("data/special_cases/tri_ineq", rho, objective_value, objective_solution)
+        rho, objective_value, objective_solution, objective_prior = simulator_mixed_covariant(d, N)
+
+        Fio.write_txt("data/special_cases/mixed_covariant", rho, objective_value, objective_solution, objective_prior)
     end
 
 end
 
-simulation_triangle_ineq("data/double_dual/mixed_2_2.txt")
+# main()
+
+simulator_spherical_design()

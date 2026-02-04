@@ -72,4 +72,8 @@ println(round.(res, digits = 3), ", ", 0.8 * res[1] + 0.2 * res[2])
 println(round.(res_prime, digits = 3), ", ", 0.8 * res_prime[1] + 0.2 * res_prime[2])
 
 # Ket.bloch_vector(rho[1]), Ket.bloch_vector(rho[2])
-Ket.bloch_vector([rho[1]])
+# Ket.bloch_vector([rho[1]])
+
+2/7
+
+

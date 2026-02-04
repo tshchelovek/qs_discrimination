@@ -172,12 +172,12 @@ end
 
 function main()
     d = 2
-    N = 3
+    N = 4
     
     # simulator_rotated("pure", d, N)
 
-    # simulator("mixed", d, N)
-    simulator("pure", d, N)
+    simulator("mixed", d, N)
+    # simulator("pure", d, N)
     # simulator("classical", d, N)
 
     # Fio.analyze_value_txt("data/dual/pure", d, N) # / Fio.analyze_value_txt("data/primal/pure", d, N)

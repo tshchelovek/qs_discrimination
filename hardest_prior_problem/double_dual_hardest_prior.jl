@@ -104,7 +104,7 @@ end
 
 function main()
     d = 2
-    N = 3
+    N = 4
 
     #=
         before running check to not overwrite data!
@@ -112,7 +112,7 @@ function main()
 
     for i in 1:100
         rho, objective_value, objective_solution = simulator_mixed(d, N)
-        # Fio.write_txt("data/special_cases/fully_mixed", rho, objective_value, objective_solution)
+        # Fio.write_txt("data/double_dual/mixed", rho, objective_value, objective_solution)
     end
 
     for i in 1:100
