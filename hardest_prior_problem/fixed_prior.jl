@@ -24,7 +24,7 @@ function simulator(filename, d, N, p = [1/N for i in 1:N])
 
     for i in 1:size(cases)[1]
         rho, objective_value, objective_solution, prior = cases[i]
-        obj_value, obj_solution = SDPModels.primal_model(d, N, rho, p)
+        obj_value, obj_solution = SDPModels.primal_model(rho, p)
         Fio.write_txt(filename_write, rho, obj_value, obj_solution, p)
     end
 

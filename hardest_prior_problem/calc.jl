@@ -8,6 +8,9 @@ just a calculator:
 using JuMP, Ket
 import LinearAlgebra
 import SCS
+module Distribs
+    include("distribs.jl")
+end
 
 # M = [[0.24999939042521085 + 0.0im -0.24999913525896275 + 0.0im; -0.24999913525896275 + 0.0im 0.24999939042521085 + 0.0im], [0.7500006092572504 + 0.0im 0.24999913472792443 + 0.0im; 0.24999913472792443 - 0.0im 0.7500006092572504 + 0.0im]]
 # ρ = [[1 0; 0 0], [1 0; 0 0]]
@@ -68,8 +71,8 @@ rho = Matrix{ComplexF64}[[0.59673 + 0.0im 0.171285 + 0.216656im; 0.171285 - 0.21
 
 res = [LinearAlgebra.tr(rho[1] * M[1]), LinearAlgebra.tr(rho[2] * M[2])]
 res_prime = [LinearAlgebra.tr(rho[1] * M_prime[1]), LinearAlgebra.tr(rho[2] * M_prime[2])]
-println(round.(res, digits = 3), ", ", 0.8 * res[1] + 0.2 * res[2])
-println(round.(res_prime, digits = 3), ", ", 0.8 * res_prime[1] + 0.2 * res_prime[2])
+# println(round.(res, digits = 3), ", ", 0.8 * res[1] + 0.2 * res[2])
+# println(round.(res_prime, digits = 3), ", ", 0.8 * res_prime[1] + 0.2 * res_prime[2])
 
 # Ket.bloch_vector(rho[1]), Ket.bloch_vector(rho[2])
 # Ket.bloch_vector([rho[1]])
@@ -77,3 +80,28 @@ println(round.(res_prime, digits = 3), ", ", 0.8 * res_prime[1] + 0.2 * res_prim
 2/7
 
 
+des383 = [[0.7886751345948129 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im]]
+for i in 1:7
+    for j in i+1:8
+        # println(i, ' ', j, ": ", real(LinearAlgebra.dot(des383[1], des383[2])))
+    end
+end
+
+LinearAlgebra.tr(des383[1] * des383[2])
+
+des321 = [[0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.5 - 0.0im; -0.5 + 0.0im 0.5 + 0.0im]]
+LinearAlgebra.tr(des321[1] * des321[2])
+
+Distribs.distr_non_uniformity([0.22222411022401584, 0.4444437494382195, 0.3333321091160241])
+Distribs.distr_non_uniformity([0.4999, 0.25, 0.25])
+Distribs.distr_non_uniformity([1,0,0])
+
+rho = Matrix{ComplexF64}[[0.749993 + 0.0im -0.027529 - 0.319572im; -0.027529 + 0.319572im 0.250007 + 0.0im], [0.547602 + 0.0im -0.380085 + 0.074666im; -0.380085 - 0.074666im 0.452398 + 0.0im]]
+povm = Matrix{ComplexF64}[[0.668 + 0.0im 0.3263 - 0.3395im; 0.3263 + 0.3395im 0.3319 + 0.0im], [0.332 + 0.0im -0.3263 + 0.3395im; -0.3263 - 0.3395im 0.6681 + 0.0im]]
+
+rho_bar = sum(rho) / length(rho)
+println("to check: ", LinearAlgebra.tr(rho[1] * povm[1]), " ", LinearAlgebra.tr(rho[2] * povm[2]))
+println("povm:\n", povm[1])
+println("pgm:\n", round.(rho_bar^(-0.5) * rho[1] * rho_bar^(-0.5)/2, digits = 4))
+println("f(rho):\n", round.(rho_bar^(0.5) * rho[1]^(-1) * rho_bar^(0.5)/2, digits = 4))
+println("f(rho):\n", round.(rho_bar^(-0.5) * rho[1]/2, digits = 4))

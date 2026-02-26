@@ -66,7 +66,7 @@ function simulator_mixed(d, N)
     # println("Generated states:\n", ρ)
     println(LinearAlgebra.tr(ρ[1] * ρ[1]))
     
-    dual_value, dual_solution = SDPModels.double_dual_model(d, N, ρ)
+    dual_value, dual_solution = SDPModels.double_dual_model(ρ)
     # println("Double dual: ", dual_value, "\n", dual_solution)
 
     # println("Sanity check: 2 >= ", dual_value * N)
@@ -80,7 +80,7 @@ function simulator_pure(d, N)
     # println("Generated states:\n", ρ)
     println(LinearAlgebra.tr(ρ[1] * ρ[1]))
     
-    dual_value, dual_solution = SDPModels.double_dual_model(d, N, ρ)
+    dual_value, dual_solution = SDPModels.double_dual_model(ρ)
     println("Double dual: ", dual_value, "\n", dual_solution)
 
     println("Sanity check: 2 >= ", dual_value * N)
@@ -94,7 +94,7 @@ function simulator_classical(d, N)
     # println("Generated states:\n", ρ)
     # println(LinearAlgebra.tr(ρ[1] * ρ[1]))
     
-    dual_value, dual_solution = SDPModels.double_dual_model(d, N, ρ)
+    dual_value, dual_solution = SDPModels.double_dual_model(ρ)
     # println("Double dual: ", dual_value, "\n", dual_solution)
 
     # println("Sanity check: 2 >= ", dual_value * N)

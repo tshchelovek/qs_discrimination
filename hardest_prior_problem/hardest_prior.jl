@@ -35,7 +35,7 @@ function prior_min(d, N, ρ)
 
     for i in range(start = 1, stop = length(p_set))
         println(p_set[i])
-        sol_dual = SDPModels.dual_model(d, N, ρ)
+        sol_dual = SDPModels.dual_model(ρ)
         if sol_dual[1] < res_min
             sol_min = sol_dual
             res_min = sol_dual[1]
@@ -51,7 +51,7 @@ end
 
 #     for i in range(start = 1, step = 1, stop = length(p_set))
 #         print(p_set[i], ": ")
-#         sol_dual = SDPModels.dual_model_with_p(d, N, ρ, p_set[i])
+#         sol_dual = SDPModels.dual_model_with_p(ρ, p_set[i])
 #         sol_dual_set[i] = tuple(sol_dual, p_set[i])
 #         println(sol_dual[1])
 #     end
@@ -66,7 +66,7 @@ end
 #     p_set = Distribs.discrete_prob_sets(N, step)
 
 #     for i in range(start = 1, stop = length(p_set))
-#         sol_dual = SDPModels.dual_model_with_p(d, N, ρ, p_set[i])
+#         sol_dual = SDPModels.dual_model_with_p(ρ, p_set[i])
 #         sol_dual = (round(sol_dual[1], digits = precision), sol_dual[2])
 #         if sol_dual[1] < res_min
 #             sol_min = sol_dual
@@ -109,11 +109,11 @@ function sdp_solver()
     # greedy_dual, greedy_probs = greedy_prior_min(d, N, ρ, 0.005)
     greedy_dual, greedy_probs = greedy_prior_set(d, N, ρ, 0.1)
 
-    # primal_optimal = SDPModels.primal_model(d, N, ρ, p)
+    # primal_optimal = SDPModels.primal_model(ρ, p)
     # println("Primal problem for optimal distribution ", p, ": ", primal_optimal[1])
     # println("Measurement: ", primal_optimal[2])
 
-    # primal_uniform = SDPModels.primal_model(d, N, ρ, [1/2, 1/2])
+    # primal_uniform = SDPModels.primal_model(ρ, [1/2, 1/2])
     # println("Primal problem for uniform distribution [0.5, 0.5]: ", primal_uniform[1])
     # println("Measurement: ", primal_uniform[2])
 
@@ -130,7 +130,7 @@ function simulator(filename, d, N)
 
     for i in 1:size(cases)[1]
         rho, objective_value, objective_solution, prior = cases[i]
-        obj_value, obj_solution, obj_prior = SDPModels.dual_model(d, N, rho)
+        obj_value, obj_solution, obj_prior = SDPModels.dual_model(rho)
         println(obj_value)
         Fio.write_txt(filename_write, rho, obj_value, obj_solution, obj_prior)
     end
@@ -162,7 +162,7 @@ function simulator_classical(d, N)
     # println("Generated states:\n", ρ)
     # println(LinearAlgebra.tr(ρ[1] * ρ[1]))
     
-    dual_value, dual_solution = SDPModels.double_dual_model(d, N, ρ)
+    dual_value, dual_solution = SDPModels.double_dual_model(ρ)
     # println("Double dual: ", dual_value, "\n", dual_solution)
 
     # println("Sanity check: 2 >= ", dual_value * N)
