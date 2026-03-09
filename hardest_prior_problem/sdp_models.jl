@@ -15,6 +15,14 @@ module Distribs
     include("distribs.jl")
 end
 
+function kron_k_times(density_matrix, k)
+    tensor_product = density_matrix
+    for i in 1:k-1
+        tensor_product = [LinearAlgebra.kron(tensor_product[i], density_matrix[i]) for i in eachindex(density_matrix)]
+    end
+    return tensor_product
+end
+
 optimizer = SCS.Optimizer
 
 function crooked_model(ρ, E, opt = optimizer)
@@ -137,7 +145,8 @@ function double_dual_model_with_q(ρ, opt = optimizer)
     @assert is_solved_and_feasible(model)
 
     solution = [value.(m) for m in M]
-    return objective_value(model), solution
+    solution_q = [value.(qq) for qq in q]
+    return objective_value(model), solution, solution_q
 end
 
 function double_dual_model(ρ, opt = optimizer)
@@ -167,11 +176,11 @@ function double_dual_model(ρ, opt = optimizer)
     return objective_value(model), solution
 end
 
-function sdp_solver(d = 6, N = 8)
+function sdp_solver(d = 2, N = 2, k = 1)
 
-    ρ = [Distribs.random_state(d) for i in 1:N]
-    println([LinearAlgebra.rank(rho) for rho in ρ])
-    # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
+    ρ = kron_k_times([Distribs.random_state(d) for i in 1:N], k)
+    # println([LinearAlgebra.rank(rho) for rho in ρ])
+    ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
     # ρ = [[1 0 ; 0 0], [0 0 ; 0 1]]
     # ρ = [[1 0 ; 0 0], [1/2 0 ; 0 1/2]]
     # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5], [0 0 ; 0 1]]
@@ -197,8 +206,10 @@ function sdp_solver(d = 6, N = 8)
     # middle = (zero + LinearAlgebra.I(d)/d) / 2
     # ρ = [LinearAlgebra.I(d)/d, middle, zero]
     # ρ = [zero, zero, one]
-    N = length(ρ)
+    # ρ = [LinearAlgebra.I(d)/d, zero]
+    # N = length(ρ)
     # ket 0 and fully mixed give as close as you want to deterministic
+    # ρ = [LinearAlgebra.I(d)/d, zero]
 
     # SAME PURITY LEVEL
     # d = 2
@@ -210,11 +221,13 @@ function sdp_solver(d = 6, N = 8)
     # p = [0, 1]
     # p = [0.5, 0.5]
     # p = [0.001, 0.999]
-    p = [1 / N for i in 1:N]
+    # p = [1 / N for i in 1:N]
+    # p = [d/(d+1), 1/(d+1)]
 
-    sol_primal = primal_model(ρ, p)
+    # println(ρ, '\n', p)
+    # sol_primal = primal_model(ρ, p)
     # sol_dual = dual_model(ρ)
-    # sol_double_dual = double_dual_model(ρ)
+    sol_double_dual = dual_model(ρ)
     # println([real(round.(LinearAlgebra.tr(ρ[i] * sol_double_dual[2][i]), digits = 4)) for i in 1:N])
     
 
@@ -244,4 +257,4 @@ function sdp_solver(d = 6, N = 8)
 end
 
 
-sdp_solver()
+sdp_solver(2, 4, 1)

@@ -24,6 +24,14 @@ module Fio
     include("fio.jl")
 end
 
+function kron_k_times(density_matrix, k)
+    tensor_product = density_matrix
+    for i in 1:k-1
+        tensor_product = [LinearAlgebra.kron(tensor_product[i], density_matrix[i]) for i in eachindex(density_matrix)]
+    end
+    return tensor_product
+end
+
 function simulator_mixed(d, N)
     # all the same random state N times
 
@@ -89,7 +97,7 @@ function simulation_triangle_ineq(file_name, d = 0, N = 0)
     data[1]
 end
 
-function simulator_spherical_design()
+function simulator_spherical_design(k = 1)
     des321 = [[0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.5 - 0.0im; -0.5 + 0.0im 0.5 + 0.0im]]
     des331 = [[0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.25 - 0.4330127018922193im; -0.25 + 0.4330127018922193im 0.5 + 0.0im], [0.5 + 0.0im -0.25 + 0.4330127018922193im; -0.25 - 0.4330127018922193im 0.5 + 0.0im]]
     des342 = [[0.7886751345948129 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im]]
@@ -98,10 +106,7 @@ function simulator_spherical_design()
     des372 = [[1.0 + 0.0im 0.0 + 0.0im; 0.0 + 0.0im 0.0 + 0.0im], [0.19618739074461747 + 0.0im 0.3971119470091982 + 0.0im; 0.3971119470091982 + 0.0im 0.8038126092553826 + 0.0im], [0.19618739074461747 + 0.0im -0.1985559735045991 - 0.34390903425626546im; -0.1985559735045991 + 0.34390903425626546im 0.8038126092553826 + 0.0im], [0.19618739074461747 + 0.0im -0.1985559735045991 + 0.34390903425626546im; -0.1985559735045991 - 0.34390903425626546im 0.8038126092553826 + 0.0im], [0.6371459425887157 + 0.0im 0.4808232423993796 + 0.0im; 0.4808232423993796 + 0.0im 0.3628540574112841 + 0.0im], [0.6371459425887157 + 0.0im -0.2404116211996898 - 0.4164051426478659im; -0.2404116211996898 + 0.4164051426478659im 0.36285405741128424 + 0.0im], [0.6371459425887157 + 0.0im -0.2404116211996898 + 0.4164051426478659im; -0.2404116211996898 - 0.4164051426478659im 0.36285405741128424 + 0.0im]]
     des383 = [[0.7886751345948129 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im]]
 
-    d = 2
-    N = 2
-    ρ = des321
-    
+    ρ = kron_k_times(des383, k)
     precision = 4
 
     dual_value, dual_solution, dual_prior = SDPModels.dual_model(ρ)
@@ -122,10 +127,7 @@ function simulator_sphere_id()
     des7_1 = [[1/2 0; 0 1/2], [1.0 + 0.0im 0.0 + 0.0im; 0.0 + 0.0im 0.0 + 0.0im], [0.19618739074461747 + 0.0im 0.3971119470091982 + 0.0im; 0.3971119470091982 + 0.0im 0.8038126092553826 + 0.0im], [0.19618739074461747 + 0.0im -0.1985559735045991 - 0.34390903425626546im; -0.1985559735045991 + 0.34390903425626546im 0.8038126092553826 + 0.0im], [0.19618739074461747 + 0.0im -0.1985559735045991 + 0.34390903425626546im; -0.1985559735045991 - 0.34390903425626546im 0.8038126092553826 + 0.0im], [0.6371459425887157 + 0.0im 0.4808232423993796 + 0.0im; 0.4808232423993796 + 0.0im 0.3628540574112841 + 0.0im], [0.6371459425887157 + 0.0im -0.2404116211996898 - 0.4164051426478659im; -0.2404116211996898 + 0.4164051426478659im 0.36285405741128424 + 0.0im], [0.6371459425887157 + 0.0im -0.2404116211996898 + 0.4164051426478659im; -0.2404116211996898 - 0.4164051426478659im 0.36285405741128424 + 0.0im]]
     des8_1 = [[1/2 0; 0 1/2], [0.7886751345948129 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im]]
 
-    ρ = des2_1
-    d = 2
-    N = length(ρ)
-    
+    ρ = des3_1
     precision = 4
 
     dual_value, dual_solution, dual_prior = SDPModels.dual_model(ρ)
@@ -135,6 +137,105 @@ function simulator_sphere_id()
     # double_dual_value, double_dual_solution = SDPModels.double_dual_model(ρ)
     # println("Double dual POVM:\n", [round.(double_dual_solution[i], digits = precision) for i in 1:size(double_dual_solution)[1]])
     println(Distribs.posterior_distr(primal_solution, ρ))
+end
+
+function simulator_non_design_tmd()
+    # it was still a design in the end
+    tetr = [[0.7886751345948129 + 0.0im 0.28867513459481287 - 0.28867513459481287im; 0.28867513459481287 + 0.28867513459481287im 0.21132486540518705 + 0.0im], [0.21132486540518716 + 0.0im 0.28867513459481287 + 0.28867513459481287im; 0.28867513459481287 - 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.21132486540518716 + 0.0im -0.28867513459481287 - 0.28867513459481287im; -0.28867513459481287 + 0.28867513459481287im 0.7886751345948125 + 0.0im], [0.7886751345948129 + 0.0im -0.28867513459481287 + 0.28867513459481287im; -0.28867513459481287 - 0.28867513459481287im 0.21132486540518705 + 0.0im]]
+    almost_tetr = [[1.0+0.0im  0.0; 0.0     0.0], [0.25+0.0im  0.433-0.0im; 0.433+0.0im   0.75+0.0im], [0.25+0.0im    -0.2165-0.375im; -0.2165+0.375im     0.75+0.0im], [0.25+0.0im    -0.2165+0.375im; -0.2165-0.375im     0.75+0.0im]]
+
+    ρ = almost_tetr
+    precision = 4
+
+    dual_value, dual_solution, dual_prior = SDPModels.dual_model(ρ)
+    println(round(dual_value, digits = precision), ' ', round.(dual_prior, digits = precision))
+    primal_value, primal_solution = SDPModels.primal_model(ρ, dual_prior)
+    # println("Primal POVM:\n", [round.(primal_solution[i], digits = precision) for i in 1:size(primal_solution)[1]])
+    # double_dual_value, double_dual_solution = SDPModels.double_dual_model(ρ)
+    # println("Double dual POVM:\n", [round.(double_dual_solution[i], digits = precision) for i in 1:size(double_dual_solution)[1]])
+    println(Distribs.posterior_distr(primal_solution, ρ))
+end
+
+function simulator_max_min_max()
+    # we checked for [2/5, 1/5, 1/5, 1/5] - TMD gives a thetraedr 
+    state_iter1 = [[1/2 0; 0 1/2], [0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.25 - 0.433im; -0.25 + 0.433im 0.5 + 0.0im], [0.5 + 0.0im -0.25 + 0.433im; -0.25 - 0.433im 0.5 + 0.0im]] # TMD for uniform - fully mixed plus triangle
+    p_iter1 = [2/5, 1/5, 1/5, 1/5] # hardest prior for state_iter1
+
+    state_iter2 = [[1.0+0.0im  0.0; 0.0     0.0], [0.25+0.0im  0.433-0.0im; 0.433+0.0im   0.75+0.0im], [0.25+0.0im    -0.2165-0.375im; -0.2165+0.375im     0.75+0.0im], [0.25+0.0im    -0.2165+0.375im; -0.2165-0.375im     0.75+0.0im]] # TMD for p_iter1
+    p_iter2 = [0.222872, 0.259045, 0.259041, 0.259041] # hardest prior for state_iter2
+
+    state_iter3 = [[0.5+0.0im     0.0; 0.0     0.5+0.0im], [1.0+0.0im  0.0; 0.0     0.0], [0.25+0.0im  0.433-0.0im; 0.433+0.0im   0.75+0.0im], [0.25+0.0im  -0.433-0.0im; -0.433+0.0im    0.75+0.0im]]
+
+    ρ = state_iter3
+    p = p_iter2
+    precision = 6
+
+    dual_value, dual_solution, dual_prior = SDPModels.dual_model(ρ)
+    println(round(dual_value, digits = precision), ' ', round.(dual_prior, digits = precision))
+    # primal_value, primal_solution = SDPModels.primal_model(ρ, p)
+    # println("Primal objective value: ", primal_value)
+    # println("Primal POVM:\n", [round.(primal_solution[i], digits = precision) for i in 1:size(primal_solution)[1]])
+    # double_dual_value, double_dual_solution = SDPModels.double_dual_model(ρ)
+    # println("Double dual POVM:\n", [round.(double_dual_solution[i], digits = precision) for i in 1:size(double_dual_solution)[1]])
+    # println(Distribs.posterior_distr(primal_solution, ρ))
+end
+
+function simulator_max_min_max_k()
+    # we checked for [2/5, 1/5, 1/5, 1/5] - TMD gives a thetraedr 
+    state_iter1 = [[1/2 0; 0 1/2], [0.5 + 0.0im 0.5 + 0.0im; 0.5 + 0.0im 0.5 + 0.0im], [0.5 + 0.0im -0.25 - 0.433im; -0.25 + 0.433im 0.5 + 0.0im], [0.5 + 0.0im -0.25 + 0.433im; -0.25 - 0.433im 0.5 + 0.0im]] # TMD for uniform - fully mixed plus triangle
+    p_iter1 = [2/5, 1/5, 1/5, 1/5] # hardest prior for state_iter1
+
+    state_iter2 = [[1.0+0.0im  0.0; 0.0     0.0], [0.25+0.0im  0.433-0.0im; 0.433+0.0im   0.75+0.0im], [0.25+0.0im    -0.2165-0.375im; -0.2165+0.375im     0.75+0.0im], [0.25+0.0im    -0.2165+0.375im; -0.2165-0.375im     0.75+0.0im]] # TMD for p_iter1
+    p_iter2 = [0.222872, 0.259045, 0.259041, 0.259041] # hardest prior for state_iter2
+
+    state_iter3 = [[0.5+0.0im     0.0; 0.0     0.5+0.0im], [1.0+0.0im  0.0; 0.0     0.0], [0.25+0.0im  0.433-0.0im; 0.433+0.0im   0.75+0.0im], [0.25+0.0im  -0.433-0.0im; -0.433+0.0im    0.75+0.0im]]
+
+    ρ = kron_k_times(state_iter2, 2)
+    # println(ρ)
+
+    p = p_iter2
+    precision = 6
+
+    dual_value, dual_solution, dual_prior = SDPModels.dual_model(ρ)
+    println(round(dual_value, digits = precision), ' ', round.(dual_prior, digits = precision))
+    # primal_value, primal_solution = SDPModels.primal_model(ρ, p)
+    # println("Primal objective value: ", primal_value)
+    # println("Primal POVM:\n", [round.(primal_solution[i], digits = precision) for i in 1:size(primal_solution)[1]])
+    # double_dual_value, double_dual_solution = SDPModels.double_dual_model(ρ)
+    # println("Double dual POVM:\n", [round.(double_dual_solution[i], digits = precision) for i in 1:size(double_dual_solution)[1]])
+    # println(Distribs.posterior_distr(primal_solution, ρ))
+end
+
+function simulator_march_09()
+    # masha asked to check
+    state1 = [[0.7886751345948129 + 0.0im 0.2886751345948129 - 0.28867513459481287im; 0.2886751345948129 + 0.28867513459481287im 0.21132486540518713 + 0.0im],
+    [0.21132486540518713 + 0.0im 0.2886751345948129 + 0.28867513459481287im; 0.2886751345948129 - 0.28867513459481287im 0.7886751345948129 + 0.0im],
+    [0.21132486540518713 + 0.0im -0.28867513459481287 - 0.2886751345948129im; -0.28867513459481287 + 0.2886751345948129im 0.7886751345948129 + 0.0im],
+    [0.7886751345948129 + 0.0im -0.28867513459481287 + 0.2886751345948129im; -0.28867513459481287 - 0.2886751345948129im 0.21132486540518713 + 0.0im]]
+
+    state2 = [[1.0 + 0.0im 0.0 - 0.0im; 0.0 + 0.0im 0.0 + 0.0im],
+    [0.1961873907446175 + 0.0im 0.3971119470091982 - 0.0im; 0.3971119470091982 + 0.0im 0.8038126092553826 + 0.0im],
+    [0.1961873907446175 + 0.0im -0.1985559735045992 - 0.34390903425626546im; -0.1985559735045992 + 0.34390903425626546im 0.8038126092553826 + 0.0im],
+    [0.1961873907446175 + 0.0im -0.1985559735045992 + 0.34390903425626546im; -0.1985559735045992 - 0.34390903425626546im 0.8038126092553826 + 0.0im],
+    [0.6371459425887158 + 0.0im 0.4808232423993797 - 0.0im; 0.4808232423993797 + 0.0im 0.3628540574112841 + 0.0im],
+    [0.6371459425887158 + 0.0im -0.24041162119968995 - 0.41640514264786577im; -0.24041162119968995 + 0.41640514264786577im 0.3628540574112841 + 0.0im],
+    [0.6371459425887158 + 0.0im -0.24041162119968995 + 0.41640514264786577im; -0.24041162119968995 - 0.41640514264786577im 0.3628540574112841 + 0.0im]] 
+
+
+    ρ = kron_k_times(state2, 2)
+    # println(ρ)
+
+    p = p_iter2
+    precision = 6
+
+    dual_value, dual_solution, dual_prior = SDPModels.dual_model(ρ)
+    println(round(dual_value, digits = precision), ' ', round.(dual_prior, digits = precision))
+    # primal_value, primal_solution = SDPModels.primal_model(ρ, p)
+    # println("Primal objective value: ", primal_value)
+    # println("Primal POVM:\n", [round.(primal_solution[i], digits = precision) for i in 1:size(primal_solution)[1]])
+    # double_dual_value, double_dual_solution = SDPModels.double_dual_model(ρ)
+    # println("Double dual POVM:\n", [round.(double_dual_solution[i], digits = precision) for i in 1:size(double_dual_solution)[1]])
+    # println(Distribs.posterior_distr(primal_solution, ρ))
 end
 
 function main()
@@ -155,4 +256,5 @@ end
 
 # main()
 
-simulator_sphere_id()
+simulator_march_09()
+# simulator_sphere_id()
