@@ -47,7 +47,7 @@ x = Vector{Vector{Int64}}()
 # append!(x[1], [1])
 # println(x)
 
-prob_recursion(3, 1, 0.2)
+# prob_recursion(3, 1, 0.2)
 
 
 M = [[0.640000272025707 + 0.0im -0.1600006833360107 + 0.0im; -0.1600006833360107 + 0.0im 0.03999974346694657 + 0.0im], 
@@ -105,3 +105,8 @@ println("povm:\n", povm[1])
 println("pgm:\n", round.(rho_bar^(-0.5) * rho[1] * rho_bar^(-0.5)/2, digits = 4))
 println("f(rho):\n", round.(rho_bar^(0.5) * rho[1]^(-1) * rho_bar^(0.5)/2, digits = 4))
 println("f(rho):\n", round.(rho_bar^(-0.5) * rho[1]/2, digits = 4))
+
+povm = [[0.0724 + 0.0im -0.1871 - 0.0842im; -0.1871 + 0.0842im 0.5815 + 0.0im], [0.436 + 0.0im 0.2468 - 0.2074im; 0.2468 + 0.2074im 0.2384 + 0.0im], [0.4917 + 0.0im -0.0597 + 0.2915im; -0.0597 - 0.2915im 0.1801 + 0.0im]]
+for p in povm
+    println(LinearAlgebra.rank(p))
+end
