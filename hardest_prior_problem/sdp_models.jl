@@ -74,6 +74,33 @@ function primal_model(ρ, p = [1/N for i in 1:N], opt = optimizer)
     return objective_value(model), solution
 end
 
+function primal_model_PGM(ρ, opt = optimizer)
+    d = size(ρ[1])[1]
+    N = length(ρ)
+
+    model = Model(opt)
+    set_silent(model)
+
+    E = Ket.pretty_good_measurement(ρ)
+    # println(E)
+
+    p = [@variable(model) for i in 1:N]
+    cs2 = [@constraint(model, p[i] >= 0) for i in 1:N]
+    @constraint(model, sum(p) == 1)
+
+    @objective(
+        model,
+        Min,
+        sum(p[i] * real(LinearAlgebra.tr(ρ[i] * E[i])) for i in 1:N),
+    )
+
+    optimize!(model)
+    @assert is_solved_and_feasible(model)
+
+    solution = [value.(e) for e in p]
+    return objective_value(model), solution
+end
+
 function dual_model_with_p(ρ, p, opt = optimizer)
     d = size(ρ[1])[1]
     N = length(ρ)
@@ -107,7 +134,7 @@ function dual_model(ρ, opt = optimizer)
     p = [@variable(model_dual) for i in 1:N]
 
     cs1 = [@constraint(model_dual, LinearAlgebra.Hermitian(p[i] * ρ[i]) <= y, HermitianPSDCone()) for i in 1:N]
-    cs2 = [@constraint(model_dual, p[i] >= 0) for i in 2:N]
+    cs2 = [@constraint(model_dual, p[i] >= 0) for i in 1:N]
     @constraint(model_dual, sum(p) == 1)
 
     @objective(
@@ -119,6 +146,89 @@ function dual_model(ρ, opt = optimizer)
     @assert is_solved_and_feasible(model_dual; dual = true)
 
     return objective_value(model_dual), value.(y), value.(p)
+end
+
+function dual_model_signed_prior(ρ, opt = optimizer)
+    d = size(ρ[1])[1]
+    N = length(ρ)
+
+    model_dual = Model(opt)
+    set_silent(model_dual)
+
+    y = @variable(model_dual, [1:d, 1:d] in HermitianPSDCone())
+    p = [@variable(model_dual) for i in 1:N]
+
+    cs1 = [@constraint(model_dual, LinearAlgebra.Hermitian(p[i] * ρ[i]) <= y, HermitianPSDCone()) for i in 1:N]
+    # cs2 = [@constraint(model_dual, p[i] >= 0) for i in 2:N]
+    @constraint(model_dual, sum(p) == 1)
+
+    @objective(
+        model_dual, 
+        Min, 
+        LinearAlgebra.tr(y))
+
+    optimize!(model_dual)
+    @assert is_solved_and_feasible(model_dual; dual = true)
+
+    return objective_value(model_dual), value.(y), value.(p)
+end
+
+function double_dual_model_with_s(ρ, opt = optimizer)
+    d = size(ρ[1])[1]
+    N = length(ρ)
+
+    model = Model(opt)
+    set_silent(model)
+
+    s = @variable(model)
+    M = [@variable(model, [1:d, 1:d] in HermitianPSDCone()) for i in 1:N]
+    # q = [@variable(model) for i in 1:N]
+
+    @constraint(model, sum(M) == LinearAlgebra.I)
+    # cs1 = [@constraint(model, q[i] >= 0) for i in 1:N]
+    cs2 = [@constraint(model, real(LinearAlgebra.tr(ρ[i] * M[i])) >= s) for i in 1:N]
+
+    @objective(
+        model,
+        Max,
+        s,
+    )
+
+    optimize!(model)
+    @assert is_solved_and_feasible(model)
+
+    solution = [value.(m) for m in M]
+    # solution_q = [value.(qq) for qq in q]
+    return objective_value(model), solution
+end
+
+function double_dual_model_with_s_eq(ρ, opt = optimizer)
+    d = size(ρ[1])[1]
+    N = length(ρ)
+
+    model = Model(opt)
+    set_silent(model)
+
+    s = @variable(model)
+    M = [@variable(model, [1:d, 1:d] in HermitianPSDCone()) for i in 1:N]
+    # q = [@variable(model) for i in 1:N]
+
+    @constraint(model, sum(M) == LinearAlgebra.I)
+    # cs1 = [@constraint(model, q[i] >= 0) for i in 1:N]
+    cs2 = [@constraint(model, real(LinearAlgebra.tr(ρ[i] * M[i])) == s) for i in 1:N]
+
+    @objective(
+        model,
+        Max,
+        s,
+    )
+
+    optimize!(model)
+    @assert is_solved_and_feasible(model)
+
+    solution = [value.(m) for m in M]
+    # solution_q = [value.(qq) for qq in q]
+    return objective_value(model), solution
 end
 
 function double_dual_model_with_q(ρ, opt = optimizer)
@@ -147,6 +257,31 @@ function double_dual_model_with_q(ρ, opt = optimizer)
     solution = [value.(m) for m in M]
     solution_q = [value.(qq) for qq in q]
     return objective_value(model), solution, solution_q
+end
+
+function double_dual_model_zero_q(ρ, opt = optimizer)
+    d = size(ρ[1])[1]
+    N = length(ρ)
+
+    model = Model(opt)
+    set_silent(model)
+
+    M = [@variable(model, [1:d, 1:d] in HermitianPSDCone()) for i in 1:N]
+
+    @constraint(model, sum(M) == LinearAlgebra.I)
+    cs2 = [@constraint(model, real(LinearAlgebra.tr(ρ[i] * M[i])) == real(LinearAlgebra.tr(ρ[1] * M[1]))) for i in 2:N]
+
+    @objective(
+        model,
+        Max,
+        real(LinearAlgebra.tr(ρ[1] * M[1])),
+    )
+
+    optimize!(model)
+    @assert is_solved_and_feasible(model)
+
+    solution = [value.(m) for m in M]
+    return objective_value(model), solution
 end
 
 function double_dual_model(ρ, opt = optimizer)
@@ -178,26 +313,30 @@ end
 
 function sdp_solver(d = 2, N = 2, k = 1)
 
-    ρ = kron_k_times([Distribs.random_state(d) for i in 1:N], k)
+    # ρ = kron_k_times([Ket.random_state(d) for i in 1:N], k)
+    # println([round.(ρ[i], digits = 3) for i in 1:N])
     # println([LinearAlgebra.rank(rho) for rho in ρ])
-    ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
+    # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5]] # |0> and |+>
     # ρ = [[1 0 ; 0 0], [0 0 ; 0 1]]
     # ρ = [[1 0 ; 0 0], [1/2 0 ; 0 1/2]]
-    # ρ = [[1 0 ; 0 0], [0.5 0.5 ; 0.5 0.5], [0 0 ; 0 1]]
+    # ρ = [[1 0 ; 0 0], [0 0 ; 0 1], [0.5 0.5 ; 0.5 0.5]]
     # ρ = [[1 0 ; 0 0], [0.81 0.39 ; 0.39 0.19], [0.64 0.48 ; 0.48 0.36]]
     # ρ = [[0.65831 + 0.0im -0.0 - 0.0im; 0.0 + 0.0im 0.34169 - 0.0im], [0.37922 - 0.0im -0.17691 + 0.42249im; -0.17691 - 0.42249im 0.62078 + 0.0im]]
     # ρ = [[1 0 ; 0 0], [0 0 ; 0 1], [0.5 0.5 ; 0.5 0.5], [0.5 -0.5 ; -0.5 0.5]]
     # ρ = [[1 0 ; 0 0], [0.1464466094067263 0.35355339059327384 ; 0.35355339059327384 0.8535533905932737], [0.1464466094067263 -0.35355339059327384 ; -0.35355339059327384 0.8535533905932737]]
 
     #??very antisymmetric states??
-    # d = 2
-    # zero = zeros(d, d)
-    # zero[1,1]=1
-    # one = zeros(d, d)
-    # one[d,d]=1
-    # presque_zero = zeros(d, d)
-    # presque_zero[3,3] = 0.9
-    # presque_zero[4,4] = 0.1
+    d = 4
+    zero = zeros(d, d)
+    zero[1,1]=1
+    one = zeros(d, d)
+    one[2,2]=1
+    two = zeros(d, d)
+    two[d,d]=1
+    q = 0.8
+    presque_zero = zeros(d, d)
+    presque_zero[1,1] = q
+    presque_zero[3,3] = 1 - q
     # plus = zeros(d, d)
     # plus[1,1] = 1/2
     # plus[1,2] = 1/2
@@ -210,6 +349,8 @@ function sdp_solver(d = 2, N = 2, k = 1)
     # N = length(ρ)
     # ket 0 and fully mixed give as close as you want to deterministic
     # ρ = [LinearAlgebra.I(d)/d, zero]
+    ρ = [zero, presque_zero, one, two]
+    N = length(ρ)
 
     # SAME PURITY LEVEL
     # d = 2
@@ -226,9 +367,20 @@ function sdp_solver(d = 2, N = 2, k = 1)
 
     # println(ρ, '\n', p)
     # sol_primal = primal_model(ρ, p)
-    # sol_dual = dual_model(ρ)
-    sol_double_dual = dual_model(ρ)
-    # println([real(round.(LinearAlgebra.tr(ρ[i] * sol_double_dual[2][i]), digits = 4)) for i in 1:N])
+    # sol_primal = primal_model_PGM(ρ)
+    sol_dual = dual_model(ρ)
+    # sol_double_dual = double_dual_model(ρ)
+    # println("normal")
+    # println("objective value: ", round(sol_double_dual[1], digits = 4))
+    # println("tr(rho_i * M_i): ", round.([real(LinearAlgebra.tr(ρ[i] * sol_double_dual[2][i])) for i in 1:N], digits = 4))
+    # println("q: ", round.(sol_double_dual[3], digits = 4))
+    # probs = round.(sol_double_dual[3], digits = 4)
+    # sol_double_dual_no_pi = dual_model_signed_prior(ρ)
+    # probs_no_pi = round.(sol_double_dual_no_pi[3], digits = 4)
+    # println("With non-neg constraint:    ", probs)
+    # println("Without non-neg constraint: ", probs_no_pi)
+
+    # println([real(round.(LinearAlgebra.tr(ρ[i] * sol_double_dual[2][i]), digits = 4)) for i in 1:3])
     
 
     # croocked model has only one variable - the prior
@@ -257,4 +409,4 @@ function sdp_solver(d = 2, N = 2, k = 1)
 end
 
 
-sdp_solver(2, 4, 1)
+sdp_solver(2, 3, 1)

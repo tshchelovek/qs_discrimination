@@ -100,13 +100,18 @@ rho = Matrix{ComplexF64}[[0.749993 + 0.0im -0.027529 - 0.319572im; -0.027529 + 0
 povm = Matrix{ComplexF64}[[0.668 + 0.0im 0.3263 - 0.3395im; 0.3263 + 0.3395im 0.3319 + 0.0im], [0.332 + 0.0im -0.3263 + 0.3395im; -0.3263 - 0.3395im 0.6681 + 0.0im]]
 
 rho_bar = sum(rho) / length(rho)
-println("to check: ", LinearAlgebra.tr(rho[1] * povm[1]), " ", LinearAlgebra.tr(rho[2] * povm[2]))
-println("povm:\n", povm[1])
-println("pgm:\n", round.(rho_bar^(-0.5) * rho[1] * rho_bar^(-0.5)/2, digits = 4))
-println("f(rho):\n", round.(rho_bar^(0.5) * rho[1]^(-1) * rho_bar^(0.5)/2, digits = 4))
-println("f(rho):\n", round.(rho_bar^(-0.5) * rho[1]/2, digits = 4))
+# println("to check: ", LinearAlgebra.tr(rho[1] * povm[1]), " ", LinearAlgebra.tr(rho[2] * povm[2]))
+# println("povm:\n", povm[1])
+# println("pgm:\n", round.(rho_bar^(-0.5) * rho[1] * rho_bar^(-0.5)/2, digits = 4))
+# println("f(rho):\n", round.(rho_bar^(0.5) * rho[1]^(-1) * rho_bar^(0.5)/2, digits = 4))
+# println("f(rho):\n", round.(rho_bar^(-0.5) * rho[1]/2, digits = 4))
 
 povm = [[0.0724 + 0.0im -0.1871 - 0.0842im; -0.1871 + 0.0842im 0.5815 + 0.0im], [0.436 + 0.0im 0.2468 - 0.2074im; 0.2468 + 0.2074im 0.2384 + 0.0im], [0.4917 + 0.0im -0.0597 + 0.2915im; -0.0597 - 0.2915im 0.1801 + 0.0im]]
 for p in povm
-    println(LinearAlgebra.rank(p))
+    # println(LinearAlgebra.rank(p))
 end
+
+#hp-PGM for them is [0,0,1]
+# println("eigen vals: ", LinearAlgebra.eigen([0.179 + 0.0im -0.373 + 0.016im; -0.373 - 0.016im 0.821 + 0.0im]))
+# println("eigen vals: ", LinearAlgebra.eigen([0.648 + 0.0im -0.016 + 0.009im; -0.016 - 0.009im 0.352 + 0.0im]))
+println("eigen vals: ", LinearAlgebra.eigen([0.619 + 0.0im -0.055 - 0.055im; -0.055 + 0.055im 0.381 + 0.0im]))

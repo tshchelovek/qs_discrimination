@@ -56,6 +56,7 @@ function read_txt(file_name, d = 0, N = 0)
     println(file_name)
     try
         open(file_name, "r") do file
+            println("OPENED")
             result = []
             for line in eachline(file)
                 rho_str, objective_value_str, objective_solution_str, prior_str = rsplit(line, ":")

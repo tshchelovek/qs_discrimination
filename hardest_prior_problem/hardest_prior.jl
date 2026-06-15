@@ -170,13 +170,30 @@ function simulator_classical(d, N)
     return ρ, dual_value, dual_solution
 end
 
+function simulator_signprob(filename, d, N)
+    filename_read = string("data/double_dual/", filename)
+    filename_write = string("data/dual/", filename)
+    println(filename_read, ' ',  filename_write)
+
+    cases = Fio.read_txt(filename_read, d, N)
+
+    for i in 1:size(cases)[1]
+        rho, objective_value, objective_solution, prior = cases[i]
+        obj_value, obj_solution, obj_prior = SDPModels.dual_model_signed_prior(rho)
+        println(obj_value)
+        # Fio.write_txt(filename_write, rho, obj_value, obj_solution, obj_prior)
+    end
+
+    return
+end
+
 function main()
     d = 2
-    N = 4
+    N = 2
     
     # simulator_rotated("pure", d, N)
 
-    simulator("mixed", d, N)
+    simulator_signprob("mixed", d, N)
     # simulator("pure", d, N)
     # simulator("classical", d, N)
 
