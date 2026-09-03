@@ -326,17 +326,17 @@ function sdp_solver(d = 2, N = 2, k = 1)
     # ρ = [[1 0 ; 0 0], [0.1464466094067263 0.35355339059327384 ; 0.35355339059327384 0.8535533905932737], [0.1464466094067263 -0.35355339059327384 ; -0.35355339059327384 0.8535533905932737]]
 
     #??very antisymmetric states??
-    d = 4
-    zero = zeros(d, d)
-    zero[1,1]=1
-    one = zeros(d, d)
-    one[2,2]=1
-    two = zeros(d, d)
-    two[d,d]=1
-    q = 0.8
-    presque_zero = zeros(d, d)
-    presque_zero[1,1] = q
-    presque_zero[3,3] = 1 - q
+    # d = 4
+    # zero = zeros(d, d)
+    # zero[1,1]=1
+    # one = zeros(d, d)
+    # one[2,2]=1
+    # two = zeros(d, d)
+    # two[d,d]=1
+    # q = 0.8
+    # presque_zero = zeros(d, d)
+    # presque_zero[1,1] = q
+    # presque_zero[3,3] = 1 - q
     # plus = zeros(d, d)
     # plus[1,1] = 1/2
     # plus[1,2] = 1/2
@@ -349,8 +349,8 @@ function sdp_solver(d = 2, N = 2, k = 1)
     # N = length(ρ)
     # ket 0 and fully mixed give as close as you want to deterministic
     # ρ = [LinearAlgebra.I(d)/d, zero]
-    ρ = [zero, presque_zero, one, two]
-    N = length(ρ)
+    # ρ = [zero, presque_zero, one, two]
+    # N = length(ρ)
 
     # SAME PURITY LEVEL
     # d = 2
@@ -358,6 +358,10 @@ function sdp_solver(d = 2, N = 2, k = 1)
     # eta = 0.3
     # ρ = [eta * Ket.random_state(d, 1) + (1 - eta) * LinearAlgebra.I(d)/d for i in 1:N]
     # println([LinearAlgebra.tr(rho^2) for rho in ρ])
+
+    #SAME PURITY Jason
+    # q = 2/3
+    # ρ = [[1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
 
     # p = [0, 1]
     # p = [0.5, 0.5]
@@ -409,4 +413,4 @@ function sdp_solver(d = 2, N = 2, k = 1)
 end
 
 
-sdp_solver(2, 3, 1)
+# sdp_solver(2, 3, 1)

@@ -405,6 +405,46 @@ function simulator_zero_is_worse()
     
 end
 
+function purity_different_source(k = 1)
+    #we have two states with the same purity but different source of mixedness
+    q = 2/7
+    # ρ = [[1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
+    # ρ = [[1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
+    # ρ = [[1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
+
+    #additional pure state (very close to one)
+    # ρ = [[1 0 0; 0 0 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
+    # ρ = [[1 0 0; 0 0 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
+    # ρ = [[1 0 0; 0 0 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
+
+    #additional id/d
+    # ρ = [[1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [1/3 0 0; 0 1/3 0; 0 0 1/3]]
+    # ρ = [[1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [1/3 0 0; 0 1/3 0; 0 0 1/3]]
+    # ρ = [[1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [1/3 0 0; 0 1/3 0; 0 0 1/3]]
+
+    #additional pure and id/d
+    # ρ = [[1 0 0; 0 0 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [1/3 0 0; 0 1/3 0; 0 0 1/3]]
+    # ρ = [[1 0 0; 0 0 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [1/3 0 0; 0 1/3 0; 0 0 1/3]]
+    # ρ = [[1 0 0; 0 0 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [1/3 0 0; 0 1/3 0; 0 0 1/3]]
+
+    #additional pure state (hopefully further)
+    # ρ = [[0 0 0; 0 0 0; 0 0 1], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
+    # ρ = [[0 0 0; 0 0 0; 0 0 1], [1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
+    ρ = [[0 0 0; 0 0 0; 0 0 1], [1-q 0 0; 0 q 0; 0 0 0], [1-q 0 0; 0 q 0; 0 0 0], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q], [(1-q)/2 (1-q)/2 0; (1-q)/2 (1-q)/2 0; 0 0 q]]
+
+    ρ = kron_k_times(ρ, k) # sum(rho) = identity * N/d, tr(rho[i]) = 1
+
+    precision = 4
+    dual_value, dual_solution, dual_prior = SDPModels.dual_model(ρ)
+    println("Dual HP for k=", k, ": ", round(dual_value, digits = precision), " & ", round.(dual_prior, digits = precision))
+end
+
+function purity_same_source(k = 1)
+    # q = 1/2
+    # ρ = 
+    # Ket.random_state(d)
+end
+
 function main()
     d = 2
     N = 4
@@ -447,7 +487,11 @@ end
 
 # simulator_signed_prior(3, 4, 1, 0)
 
-simulator_zero_is_worse()
+# simulator_zero_is_worse()
 
 # simulator_spherical_design(6)
 # simulator_sphere_id()
+
+# for i in range(1, 4)    
+#     purity_different_source(i)
+# end
